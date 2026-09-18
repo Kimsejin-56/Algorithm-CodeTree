@@ -14,14 +14,12 @@ class Point implements Comparable<Point>{
 }
 
 public class Main {
-    static int n,m, visitId;
-    static int[][] board, visited;
+    static int n,m;
+    static int[][] board;
     static List<Point> stores, peoples, camps;
     static int[] dx={-1, 0, 0, 1};
     static int[] dy={0, -1, 1, 0};
     static boolean[][] check;
-    static Queue<Point> q;
-
 
     public static void main(String[] args) {
         Scanner sc= new Scanner(System.in);
@@ -32,8 +30,6 @@ public class Main {
         stores=new ArrayList<>();
         peoples=new ArrayList<>();
         camps=new ArrayList<>();
-        q=new ArrayDeque<>();
-        visited=new int[n][n];
         ArrayList<Point>list=new ArrayList<>();
         int t=1;
 
@@ -55,6 +51,7 @@ public class Main {
                 move(p);
             }
 
+
             for(int i=0; i<peoples.size(); i++){
                 Point p=peoples.get(i);
                 Point store=stores.get(p.num);
@@ -63,13 +60,12 @@ public class Main {
                     cnt++;
                     peoples.remove(p);
                     i--;
-                    if(cnt==m){
+                    if(cnt==m) {
                         System.out.println(t);
                         return;
                     }
                 }
             }
-           
 
             if(t<=m){
                 int min=Integer.MAX_VALUE;
@@ -101,10 +97,10 @@ public class Main {
     }
 
     public static void move(Point s){
-        q.clear();
-        visitId++;
+        Queue<Point> q=new ArrayDeque<>();
+        boolean[][] visited=new boolean[n][n];
         q.offer(s);
-        visited[s.x][s.y]=visitId;
+        visited[s.x][s.y]=true;
         Point arrive=stores.get(s.num);
         s.dir=-1;
 
@@ -121,25 +117,26 @@ public class Main {
                 int nx=p.x+dx[i];
                 int ny=p.y+dy[i];
 
-                if(nx>=0 && nx<n && ny>=0 && ny<n && visited[nx][ny]!=visitId && !check[nx][ny]){
+                if(nx>=0 && nx<n && ny>=0 && ny<n && !visited[nx][ny] && !check[nx][ny]){
                     Point next=new Point(nx, ny);
                     if(p.dir==-1) next.dir=i;
                     else next.dir=p.dir;
                     q.offer(next);
-                    visited[nx][ny]=visitId;
+                    visited[nx][ny]=true;
                 }
             }
         }
     }
 
     public static int[][] bfs(Point s){
-        q.clear();
+        Queue<Point> q=new ArrayDeque<>();
         int[][] dis=new int[n][n];
         for(int i=0; i<n; i++){
             Arrays.fill(dis[i], -1);
         }
         dis[s.x][s.y]=0;
         q.offer(s);
+        int level=0;
 
         while(!q.isEmpty()){
             Point p=q.poll();
@@ -157,5 +154,3 @@ public class Main {
         return dis;
     }
 }
-
-
