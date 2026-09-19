@@ -43,12 +43,12 @@ public class Main {
         while(t!=k){
             int total=0;
             if(searchArr()) return;
-            total=getRock();
-            int cnt=1;
-            while(cnt>0){
-                cnt=getRock();
+            while(true){
+                int cnt=getRock();
+                if(cnt==0) break;
                 total+=cnt;
             }
+            
             System.out.print(total+" ");
             t++;
         }
@@ -104,30 +104,12 @@ public class Main {
                     makeArr(arr, tmp, i, j);
                     cnt=count(arr);
 
-                    if(p.x<cnt){
+                    if(isBetter(cnt, x, i, j, p)){
                         p.x=cnt;
                         p.y=x;
                         p.tmpX=i;
                         p.tmpY=j;
                         copyArr(select, arr);
-                    }else if(p.x==cnt){
-                        if(p.y>x){
-                            p.y=x;
-                            p.tmpX=i;   
-                            p.tmpY=j;
-                            copyArr(select, arr);
-                        } else if(p.y==x){
-                            if(p.tmpY>j){
-                                p.tmpX=i;   
-                                p.tmpY=j;
-                                copyArr(select, arr);
-                            }else if(p.tmpY==j){
-                                if(p.tmpX>i){
-                                    p.tmpX=i;
-                                    copyArr(select, arr);
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -208,5 +190,12 @@ public class Main {
         for(int r=0; r<n; r++){
             select[r]=Arrays.copyOf(arr[r], n);
         }
+    }
+
+    public static boolean isBetter(int cnt, int angle, int x, int y, Point p){
+        if(cnt!=p.x) return cnt>p.x;
+        if(angle!=p.y) return angle<p.y;
+        if(y!=p.tmpY) return y<p.tmpY;
+        return x<p.tmpX;
     }
 }
