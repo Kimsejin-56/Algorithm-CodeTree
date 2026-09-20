@@ -1,207 +1,192 @@
 import java.util.*;
 
-class Point implements Comparable<Point>{
-    int x,y;
+class Point implements Comparable<Point> {
+    int x, y;
 
-    public Point(int x, int y){
-        this.x=x;
-        this.y=y;
+    public Point(int x, int y) {
+        this.x = x;
+        this.y = y;
     }
 
-    public int compareTo(Point p){
-        if(this.x==p.x) return this.y - p.y;
+    public int compareTo(Point p) {
+        if (this.x == p.x)
+            return this.y - p.y;
         return this.x - p.x;
     }
 }
 
-class Dis{
-    int dis;
-    Point obj;
-    public Dis(int dis, Point obj){
-        this.dis=dis;
-        this.obj=obj;
-    } 
-}
-
 public class Main {
-    static int N, M, K, answer;
+    static int n, m, k;
     static int[][] board;
-    static int[] dx={-1, 1, 0, 0};
-    static int[] dy={0, 0, -1, 1};
+    static int[] dx = { -1, 1, 0, 0 };
+    static int[] dy = { 0, 0, -1, 1 };
+    static List<Point> peoples;
     static Point exit;
-    static List<Point> players=new ArrayList<>();
-
+    static int total;
 
     public static void main(String[] args) {
-        Scanner sc=new Scanner(System.in);
+        Scanner sc = new Scanner(System.in);
+        n = sc.nextInt();
+        m = sc.nextInt();
+        k = sc.nextInt();
+        peoples = new ArrayList<>();
+        board = new int[n][n];
+        int turn = 0;
+        total = 0;
 
-        N=sc.nextInt();
-        M=sc.nextInt();
-        K=sc.nextInt();
-
-        board=new int[N+1][N+1];
-        for(int i=1; i<=N; i++){
-            for(int j=1; j<=N; j++){
-                board[i][j]=sc.nextInt();
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                board[i][j] = sc.nextInt();
             }
         }
 
-        for(int i=0; i<M; i++){
-            players.add(new Point(sc.nextInt(), sc.nextInt()));
+        for (int i = 0; i < m; i++) {
+            Point p = new Point(sc.nextInt() - 1, sc.nextInt() - 1);
+            peoples.add(p);
         }
 
-        exit=new Point(sc.nextInt(), sc.nextInt());
+        exit = new Point(sc.nextInt() - 1, sc.nextInt() - 1);
 
-        while(K > 0){
-            for(int i=0; i<players.size(); i++) {
-                move(players.get(i));
-            }
-            exitPerson();
-            if(players.size()==0) break;
-            spin();
-            K--;
-        }
-
-        System.out.println(answer);
-        System.out.println(exit.x+" "+exit.y);
-    }
-
-    
-    static void exitPerson(){
-        int len=players.size();
-        List<Point> tmp=new ArrayList<>();
-        for(int i=0; i<len; i++){
-            Point p = players.get(i);
-            if(p.x!=exit.x || p.y!=exit.y){
-                tmp.add(p);
-            }
-        }
-        players=tmp;
-    }
-
-    static void spin(){
-        Dis square=choice();
-        Point start=square.obj;
-        int dis=square.dis;
-        int size=dis+1;
-        int[][] tmp=new int[size][size];
-
-        int sx=start.x;
-        int sy=start.y;
-
-        for(int i=0; i< size; i++){
-            for(int j=0; j<size; j++){
-                int val = board[sx+i][sy+j];
-                if(val>0) val--;
-                tmp[j][size-i-1]=val;
-            }
-        }
-
-        for(int i=0; i< size; i++){
-            for(int j=0; j<size; j++){
-                board[sx+i][sy+j]=tmp[i][j];
-            }
-        }
-
-        int ex=exit.x-sx;
-        int ey=exit.y-sy;
-        if(ex>=0 && ex<size && ey>=0 && ey<size){
-            int rx=ey;
-            int ry=size-ex-1;
-            exit.x=rx+sx;
-            exit.y=ry+sy;
-        }
-
-        for(Point p :players){
-            int px=p.x-sx;
-            int py=p.y-sy;
-            if(px>=0 && px<size && py>=0 && py<size){
-                int rx=py;
-                int ry=size-px-1;
-                p.x=rx+sx;
-                p.y=ry+sy;
-            }
-        }
-
-                
-    }
-
-    static Dis choice(){
-        List<Point> squares=new ArrayList<>();
-        int min=Integer.MAX_VALUE;
-        for(Point p : players) {
-            int dis=Math.max(Math.abs(p.x-exit.x), Math.abs(p.y-exit.y));
-            min=Math.min(min, dis);
-        }
-
-        for(Point p : players){
-            int dist=Math.max(Math.abs(p.x-exit.x), Math.abs(p.y-exit.y));
-            if(min < dist) continue;
-
-            for(int sx=1; sx+dist<=N; sx++){
-                for(int sy=1; sy+dist<=N; sy++){
-                    boolean isPerson=(sx<=p.x && p.x<=sx+dist && sy<=p.y && p.y<=sy+dist);
-                    boolean isExit = (sx <= exit.x && exit.x <= sx + dist && sy <= exit.y && exit.y <= sy + dist);
-
-                    if(!isPerson || !isExit) continue;
-
-                    squares.add(new Point(sx, sy));
-
+        while (turn != k) {
+            for (int i = 0; i < peoples.size(); i++) {
+                Point p = peoples.get(i);
+                if (move(p)) {
+                    peoples.remove(p);
+                    i--;
                 }
             }
+
+            if (peoples.isEmpty())
+                break;
+            select();
+            turn++;
         }
 
-        Collections.sort(squares);
-        Point sq=squares.get(0);
-        return new Dis(min, sq);
+        System.out.println(total);
+        int x = exit.x + 1;
+        int y = exit.y + 1;
+        System.out.println(x + " " + y);
     }
 
+    public static void select() {
+        List<Point> list = new ArrayList<>();
+        int len = 0;
 
-    static void move(Point p){
-        Queue<Point> q=new LinkedList<>();
-        q.offer(p);
-        List<Dis> dists=new ArrayList<Dis>();
-        int original=Math.abs(p.x-exit.x)+Math.abs(p.y-exit.y);
+        for (int i = 2; i <= n; i++) {
+            for (int r = 0; r < n; r++) {
+                for (int c = 0; c < n; c++) {
+                    if (r + i > n || c + i > n)
+                        continue;
 
-        while(!q.isEmpty()){
-            int len =q.size();
-
-            for(int t=0; t<len; t++){
-                Point player=q.poll();
-                for(int i=0; i<4; i++){
-                    int nx=player.x+dx[i];
-                    int ny=player.y+dy[i];
-
-                    if(nx>0 && ny>0 && nx<=N && ny<=N && board[nx][ny]==0){
-                        Point tmp=new Point(nx, ny);
-                        int dist=Math.abs(tmp.x-exit.x)+Math.abs(tmp.y-exit.y);
-                        if(original > dist){
-                           dists.add(new Dis(dist, tmp));
-                        }
+                    if (isSquare(r, c, i)) {
+                        list.add(new Point(r, c));
                     }
                 }
             }
+            if (!list.isEmpty()) {
+                len = i;
+                break;
+            }
+        }
 
-            Point result=getMin(dists);
-            
-            if(result!=null){
-                answer++;
-                p.x=result.x;
-                p.y=result.y;
-            } 
+        if (!list.isEmpty()) {
+            Collections.sort(list);
+            Point square = list.get(0);
+            int[][] tmp = new int[len][len];
+            int r = 0;
+
+            for (int i = square.x; i < square.x + len; i++) {
+                int c = 0;
+                for (int j = square.y; j < square.y + len; j++) {
+                    tmp[r][c++] = board[i][j];
+                }
+                r++;
+            }
+
+            spin(tmp, square);
         }
     }
 
-    static Point getMin(List<Dis> dists){
-        int min=Integer.MAX_VALUE;
-        Point p=null;
-        for(Dis dist : dists){
-            if(min > dist.dis){
-                min=dist.dis;
-                p=dist.obj;
+    public static void spin(int[][] tmp, Point p) {
+        int l = tmp.length;
+        int[][] arr = new int[l][l];
+
+        for (int i = 0; i < l; i++) {
+            for (int j = 0; j < l; j++) {
+                arr[j][l - i - 1] = tmp[i][j];
+                if (arr[j][l - i - 1] > 0)
+                    arr[j][l - i - 1]--;
             }
         }
-        
-        return p;
+
+        int r = 0;
+        for (int i = p.x; i < p.x + l; i++) {
+            int c = 0;
+            for (int j = p.y; j < p.y + l; j++) {
+                board[i][j] = arr[r][c++];
+            }
+            r++;
+        }
+
+        for (Point s : peoples) {
+            if (p.x <= s.x && s.x < p.x + l && p.y <= s.y && s.y < p.y + l) {
+                int x = s.x-p.x;
+                int y = s.y-p.y;
+                s.x = p.x + y;
+                s.y = p.y + l - x - 1;
+            }
+        }
+
+        int x = exit.x-p.x;
+        int y = exit.y-p.y;
+        exit.x = p.x + y;
+        exit.y = p.y + l - x - 1;
+    }
+
+    public static boolean isSquare(int x, int y, int len) {
+        int[][] tmp = new int[len][len];
+        boolean passE = false;
+        boolean passP = false;
+
+        for (int i = x; i < x + len; i++) {
+            for (int j = y; j < y + len; j++) {
+                if (i == exit.x && j == exit.y)
+                    passE = true;
+                if (passP)
+                    continue;
+                for (Point p : peoples) {
+                    if (p.x == i && p.y == j)
+                        passP = true;
+                }
+            }
+        }
+
+        return passE && passP;
+    }
+
+    public static boolean move(Point p) {
+        int disEnd = dis(p, exit);
+        for (int i = 0; i < 4; i++) {
+            int nx = p.x + dx[i];
+            int ny = p.y + dy[i];
+
+            if (nx >= 0 && nx < n && ny >= 0 && ny < n && board[nx][ny] == 0 && dis(nx, ny, exit) < disEnd) {
+                p.x = nx;
+                p.y = ny;
+                total++;
+                if (p.x == exit.x && p.y == exit.y)
+                    return true;
+                return false;
+            }
+        }
+        return false;
+    }
+
+    public static int dis(Point s, Point e) {
+        return Math.abs(s.x - e.x) + Math.abs(s.y - e.y);
+    }
+
+    public static int dis(int nx, int ny, Point e) {
+        return Math.abs(nx - e.x) + Math.abs(ny - e.y);
     }
 }
