@@ -1,220 +1,278 @@
 import java.util.*;
 
-class Point{
-    int x, y;
-
-    public Point(int x, int y){
+class Point implements Comparable<Point>{
+    int x, y, t;
+    
+    public Point(int x, int y) {
         this.x=x;
         this.y=y;
+    }
+    
+    public int compareTo(Point p) {
+        int sum1=this.x+this.y;
+        int sum2=p.x+p.y;
+        if(sum1==sum2) return p.y-this.y;
+        return sum2-sum1;
     }
 }
 
 public class Main {
-    static int N,M,K,time;
-    static int[][] board, turn;
-    static boolean[][] attacked;
+    static int n, m, k;
+    static int[][] board;
+    static int[] dx= {0, 1, 0, -1};
+    static int[] dy= {1, 0, -1, 0};
+    static int[] cx= {0, 1, 0, -1, 1, -1, 1, -1};
+    static int[] cy= {1, 0, -1, 0, 1, 1, -1, -1};
+    static List<Point> towers;
     static Point weak, strong;
-    static int[] dx={0, 1, 0, -1, -1, 1, 1, -1};
-    static int[] dy={1, 0, -1, 0, -1, -1, 1, 1};
-
-
+    static boolean[][] demage;
     public static void main(String[] args) {
         Scanner sc=new Scanner(System.in);
-        N=sc.nextInt();
-        M=sc.nextInt();
-        K=sc.nextInt();
-
-        board=new int[N][M];
-        turn=new int[N][M];
-
-        for(int i=0; i<N; i++){
-            for(int j=0; j<M; j++){
+        n=sc.nextInt();
+        m=sc.nextInt();
+        k=sc.nextInt();
+        board=new int[n][m];
+        List<Point> weaks=new ArrayList<>();
+        List<Point> strongs=new ArrayList<>();
+        towers=new ArrayList<>();
+        int turn=1;
+        
+        for(int i=0; i<n; i++) {
+            for(int j=0; j<m; j++) {
                 board[i][j]=sc.nextInt();
+                if(board[i][j]!=0) {
+                    towers.add(new Point(i, j));
+                }
             }
         }
-
-        time=0;
-        while(time!=K){
-            time++;
-            weakTower();
-            strongTower();
-            attack();
-            breakTower();
-            if(exit()) break;
-            readyTower();
+        
+        while(turn<=k) {
+            if(towers.size() <= 1) break;
+            demage=new boolean[n][m];
+            selectWeak(weaks);
+            weaks.clear();
+            board[weak.x][weak.y]+=(n+m);
+            demage[weak.x][weak.y]=true;
+            selectStrong(strongs);
+            strongs.clear();
+            weak.t=turn;
+            
+            if(!razor()) canon();
+            init();
+            
+            turn++;
         }
-
+        
         int max=0;
-        for(int i=0; i<N; i++){
-            for(int j=0; j<M; j++){
+        for(int i=0; i<n; i++) {
+            for(int j=0; j<m; j++) {
                 max=Math.max(max, board[i][j]);
             }
         }
-
+        
         System.out.println(max);
     }
-
-    static void weakTower(){
-        int min=Integer.MAX_VALUE;
-        Point wt=new Point(-1,-1);
-        for(int i=0; i<N; i++){
-            for(int j=0; j<M; j++){
-                int pw=board[i][j];
-                int t=turn[i][j];
-                if(pw==0) continue;
-
-                if(min > pw){
-                    min=pw;
-                    wt.x=i;
-                    wt.y=j;
-                } else if(min == pw){
-                    if(t > turn[wt.x][wt.y]){
-                        wt.x=i;
-                        wt.y=j;
-                    } else if(t == turn[wt.x][wt.y]){
-                        int totalpw=i+j;
-                        if(totalpw > wt.x+wt.y){
-                            wt.x=i;
-                            wt.y=j;
-                        } else if(totalpw == wt.x+wt.y){
-                            if(j >wt.y){
-                                wt.x=i;
-                                wt.y=j;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        board[wt.x][wt.y] += N+M;
-        turn[wt.x][wt.y]=time;
-        weak=wt;
-    }
-
-    static void strongTower(){
-        int max=-1;
-        Point wt=new Point(-1,-1);
-        for(int i=0; i<N; i++){
-            for(int j=0; j<M; j++){
-                int pw=board[i][j];
-                int t=turn[i][j];
-
-                if(board[i][j]==0) continue;
-                if(i==weak.x && j==weak.y) continue;
-                
-                if(max < pw){
-                    max=pw;
-                    wt.x=i;
-                    wt.y=j;
-                } else if(max == pw){
-                     if(t < turn[wt.x][wt.y]){
-                        wt.x=i;
-                        wt.y=j;
-                    } else if(t == turn[wt.x][wt.y]){
-                         int totalpw=i+j;
-                        if(totalpw < wt.x+wt.y){
-                            wt.x=i;
-                            wt.y=j;
-                        } else if(totalpw == wt.x+wt.y){
-                            if(j <wt.y){
-                                wt.x=i;
-                                wt.y=j;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        strong=wt;
-    }
-
-    static void attack(){
-        attacked=new boolean[N][M];
-        attacked[strong.x][strong.y]=true;
-        attacked[weak.x][weak.y]=true;
-        if(razor(weak)) return;
-        else canon(strong);
-    }
-
-    static void canon(Point p){
-        int pw=board[weak.x][weak.y]/2;
-
-        for(int i=0; i<8; i++){
-            int nx=(p.x+dx[i]+N)%N;
-            int ny=(p.y+dy[i]+M)%M;
-
-            if(board[nx][ny]!=0){
-                if(nx==weak.x && ny==weak.y) continue;
-                board[nx][ny]-=pw;
-                attacked[nx][ny]=true;
-            }
-        }
-
-        board[p.x][p.y]-=board[weak.x][weak.y];
-    }
-
-    static boolean razor(Point point){
-        Queue<Point> q=new LinkedList<>();
-        boolean[][] visited= new boolean[N][M];
-        Point[][] prev=new Point[N][M];
-
-        q.offer(point);
-        visited[point.x][point.y]=true;
-
-        while(!q.isEmpty()){
-            Point p=q.poll();
-            
-            if(strong.x==p.x && strong.y==p.y) break;
-
-            for(int i=0; i<4; i++){
-                int nx=(p.x+dx[i]+N)%N;
-                int ny=(p.y+dy[i]+M)%M;
-                if(!visited[nx][ny] && board[nx][ny]!=0){
-                    q.offer(new Point(nx, ny));
-                    visited[nx][ny]=true;
-                    prev[nx][ny]=p;
-                }
-            }
-        }
-
-        if(!visited[strong.x][strong.y]) return false;
+    
+    public static boolean razor() {
+        int[][] dis;
+        dis=bfs(strong);
+        List<Point> move=new ArrayList<>();
+        Point p=new Point(weak.x, weak.y);
         
-        Point cur=prev[strong.x][strong.y];
-        int pw=board[point.x][point.y]/2;
-        while(point.x!=cur.x || point.y!=cur.y){
-            board[cur.x][cur.y]-=pw;
-            attacked[cur.x][cur.y]=true;
-            cur=prev[cur.x][cur.y];
+        for(int i=0; i<n; i++) {
+            for(int j=0; j<m; j++) {
+                for(int d=0; d<4; d++) {
+                    int nx=p.x+dx[d];
+                    int ny=p.y+dy[d];
+
+                    if(nx<0) nx=n-1;
+                    if(ny<0) ny=m-1;
+                    if(nx>=n) nx=0;
+                    if(ny>=m) ny=0;
+            
+                    
+                    if(board[nx][ny]!=0 && dis[p.x][p.y]>dis[nx][ny]) {
+                        p.x=nx;
+                        p.y=ny;
+                        if(dis[nx][ny]!=0)move.add(new Point(nx, ny));
+                        break;
+                    }
+                }
+            }
         }
-        board[strong.x][strong.y]-=board[point.x][point.y];
+        
+        if(p.x!=strong.x || p.y!=strong.y) return false;
+        
+        int num=board[weak.x][weak.y]/2;
+        for(Point t : move) {
+            board[t.x][t.y]-=num;
+            demage[t.x][t.y]=true;
+            if(board[t.x][t.y]<=0) {
+                board[t.x][t.y]=0;
+                for(int i=0; i<towers.size(); i++) {
+                    Point tower=towers.get(i);
+                    if(t.x==tower.x && t.y==tower.y) {
+                        towers.remove(tower);
+                        break;
+                    }
+                }
+            }
+        }
+        board[strong.x][strong.y]-=board[weak.x][weak.y];
+        demage[strong.x][strong.y]=true;
+        if(board[strong.x][strong.y]<=0){
+            board[strong.x][strong.y]=0;
+            towers.remove(strong);
+        }
+        
         return true;
     }
-
-    static void breakTower(){
-        for(int i=0; i<N; i++){
-            for(int j=0; j<M; j++){
-                if(board[i][j]<0)board[i][j]=0;
+    
+    public static void canon() {
+        Point p=new Point(strong.x, strong.y);
+        int num=board[weak.x][weak.y]/2;
+        
+        for(int i=0; i<8; i++) {
+            int nx=p.x+cx[i];
+            int ny=p.y+cy[i];
+            
+            if(nx<0) nx=n-1;
+            if(ny<0) ny=m-1;
+            if(nx>=n) nx=0;
+            if(ny>=m) ny=0;
+            
+            if(board[nx][ny]!=0) {
+                if(nx==weak.x && ny==weak.y) continue;
+                board[nx][ny]-=num;
+                demage[nx][ny]=true;
+                
+                if(board[nx][ny]<=0) {
+                    board[nx][ny]=0;
+                    for(int j=0; j<towers.size(); j++) {
+                        Point tower=towers.get(j);
+                        if(nx==tower.x && ny==tower.y) {
+                            towers.remove(tower);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        board[strong.x][strong.y]-=board[weak.x][weak.y];
+        demage[strong.x][strong.y]=true;
+        if(board[strong.x][strong.y]<=0){
+            board[strong.x][strong.y]=0;
+            towers.remove(strong);
+        }
+    }
+    
+    public static void init() {
+        for(int i=0; i<n; i++) {
+            for(int j=0; j<m; j++) {
+                if(board[i][j]!=0 && !demage[i][j]) {
+                    board[i][j]++;
+                }
             }
         }
     }
-
-    static void readyTower(){
-        for(int i=0; i<N; i++){
-            for(int j=0; j<M; j++){
-                if(!attacked[i][j] && board[i][j]!=0) board[i][j]++;
+    
+    public static int[][] bfs(Point s) {
+        Queue<Point> q=new ArrayDeque<>();
+        boolean[][] visited=new boolean[n][m];
+        int[][] dis=new int[n][m];
+        q.offer(s);
+        visited[s.x][s.y]=true;
+        
+        while(!q.isEmpty()) {
+            Point p=q.poll();
+            for(int i=0; i<4; i++) {
+                int nx=p.x+dx[i];
+                int ny=p.y+dy[i];
+                
+                if(nx<0) nx=n-1;
+                if(ny<0) ny=m-1;
+                if(nx>=n) nx=0;
+                if(ny>=m) ny=0;
+                
+                if(!visited[nx][ny] && board[nx][ny]!=0) {
+                    visited[nx][ny]=true;
+                    q.offer(new Point(nx, ny));
+                    dis[nx][ny]=dis[p.x][p.y]+1;
+                }
             }
+        }
+        
+        return dis;
+    }
+    
+    public static void selectWeak(List<Point> weaks) {
+        int min=Integer.MAX_VALUE;
+        List<Point> list=new ArrayList<>();
+        for(int i=0; i<towers.size(); i++) {
+            Point p=towers.get(i);
+            if(min>board[p.x][p.y]) {
+                min=board[p.x][p.y];
+                weaks.clear();
+                weaks.add(p);
+            }else if(min==board[p.x][p.y]) weaks.add(p);
+        }
+        
+        if(weaks.size()==1) {
+            weak=weaks.get(0);
+            return;
+        }
+        
+        int max=Integer.MIN_VALUE;
+        for(int i=0; i<weaks.size(); i++) {
+            Point p=weaks.get(i);
+            if(max<p.t) {
+                max=p.t;
+                list.clear();
+                list.add(p);
+            }else if(max==p.t) list.add(p);
+        }
+        
+        Collections.sort(list);
+        if(!list.isEmpty()) {
+            weak=list.get(0);
         }
     }
+    
+    public static void selectStrong(List<Point> strongs) {
+        int max=Integer.MIN_VALUE;
+        List<Point> list=new ArrayList<>();
+        for(int i=0; i<towers.size(); i++) {
+            Point p=towers.get(i);
 
-    static boolean exit(){
-        int cnt=0;
-        for(int i=0; i<N; i++){
-            for(int j=0; j<M; j++){
-                if(board[i][j] > 0) cnt++;
-            }
+            if(p.x==weak.x && p.y==weak.y) continue;
+
+            if(max<board[p.x][p.y]) {
+                max=board[p.x][p.y];
+                strongs.clear();
+                strongs.add(p);
+            }else if(max==board[p.x][p.y]) strongs.add(p);
         }
-
-        if(cnt==1) return true;
-        return false;
+        
+        if(strongs.size()==1) {
+            strong=strongs.get(0);
+            return;
+        }
+        
+        int min=Integer.MAX_VALUE;
+        for(int i=0; i<strongs.size(); i++) {
+            Point p=strongs.get(i);
+            if(min>p.t) {
+                min=p.t;
+                list.clear();
+                list.add(p);
+            }else if(min==p.t) list.add(p);
+        }
+        
+        Collections.sort(list);
+        if(!list.isEmpty()) {
+            int len=list.size()-1;
+            strong=list.get(len);
+        }
     }
 }
