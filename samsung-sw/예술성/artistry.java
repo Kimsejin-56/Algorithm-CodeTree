@@ -46,98 +46,41 @@ public class Main {
            
            
            dfs(1, 0, arr);
-           spinM(m, len);
-           cutArr(m, len);
+           rotate(m, len);
            map.clear();
            t++;
        }
        System.out.println(total);
     }
     
-    public static void  cutArr(int m, int len) {
-        int[][] tmp=new int[len][len];
-        for(int x=0; x<len; x++) {
-            for(int y=0; y<len; y++) {
-                 tmp[x][y]=board[x][y];  
+    public static void rotate(int m, int len){
+        int[][] tmp=new int[n][n];
+
+        for(int i=0; i<n; i++){
+            for(int j=0; j<n; j++){
+                if(i==m || j==m){
+                    tmp[n-j-1][i]=board[i][j];
+                }
             }
         }
-        int[][] arr=spin(tmp);
-        
-        for(int x=0; x<len; x++) {
-            for(int y=0; y<len; y++) {
-                 board[x][y]=arr[x][y];  
-            }
-        }
-       
-        int nx=0;
-        int ny=m+1;
-        for(int x=0; x<len; x++) {
-            for(int y=0; y<len; y++) {
-                 tmp[x][y]=board[nx][ny++];  
-            }
-            nx++;
-            ny=m+1;
-        }
-        arr=spin(tmp);
-        
-        nx=0;
-        ny=m+1;
-        for(int x=0; x<len; x++) {
-            for(int y=0; y<len; y++) {
-                 board[nx][ny++]=arr[x][y];  
-            }
-            nx++;
-            ny=m+1;
-        }
-        
-        nx=m+1;
-        for(int x=0; x<len; x++) {
-            for(int y=0; y<len; y++) {
-                 tmp[x][y]=board[nx][y];  
-            }
-            nx++;
-        }
-        arr=spin(tmp);
-        
-        nx=m+1;
-        for(int x=0; x<len; x++) {
-            for(int y=0; y<len; y++) {
-                 board[nx][y]=arr[x][y];  
-            }
-            nx++;
-        }
-        
-        nx=m+1;
-        ny=m+1;
-        for(int x=0; x<len; x++) {
-            for(int y=0; y<len; y++) {
-                 tmp[x][y]=board[nx][ny++];  
-            }
-            nx++;
-            ny=m+1;
-        }
-        arr=spin(tmp);
-        
-        nx=m+1;
-        ny=m+1;
-        for(int x=0; x<len; x++) {
-            for(int y=0; y<len; y++) {
-                 board[nx][ny++]=arr[x][y];  
-            }
-            nx++;
-            ny=m+1;
-        }
+
+        spin(0, 0, len, tmp);
+        spin(0, m+1, len, tmp);
+        spin(m+1, 0, len, tmp);
+        spin(m+1, m+1, len, tmp);
+
+        board=tmp;
     }
     
-    public static int[][] spin(int[][] arr) {
-        int l=arr.length;
-        int[][] tmp=new int[l][l];
-        for(int i=0; i<l; i++) {
-            for(int j=0; j<l; j++) {
-                tmp[j][l-i-1]=arr[i][j];
+    public static void spin(int sx, int sy, int len, int[][] arr) {
+        for(int i=0; i<len; i++) {
+            for(int j=0; j<len; j++) {
+                int nx=j;
+                int ny=len-i-1;
+                arr[nx+sx][ny+sy]=board[sx+i][sy+j];
             }
         }
-        return tmp;
+        
     }
     
     public static boolean isAvailable(List<Point> g1, List<Point> g2) {
@@ -183,78 +126,6 @@ public class Main {
         return (s1+s2)*v1*v2*cnt;
     }
     
-    public static void spinM(int m, int len) {
-        int[] right=new int[len];
-        int[] left=new int[len];
-        int[] up=new int[len];
-        int[] down=new int[len];
-        
-        int nx=m;
-        int ny=m;
-        for(int i=0; i<len; i++) {
-            nx+=dx[0];
-            ny+=dy[0];
-            up[i]=board[nx][ny];    
-        }
-        
-        nx=m;
-        ny=m;
-        for(int i=0; i<len; i++) {
-            nx+=dx[1];
-            ny+=dy[1];
-            left[i]=board[nx][ny];    
-        }
-        
-        nx=m;
-        ny=m;
-        for(int i=0; i<len; i++) {
-            nx+=dx[2];
-            ny+=dy[2];
-            down[i]=board[nx][ny];    
-        }
-        
-        nx=m;
-        ny=m;
-        for(int i=0; i<len; i++) {
-            nx+=dx[3];
-            ny+=dy[3];
-            right[i]=board[nx][ny];    
-        }
-        
-        //----
-        
-        nx=m;
-        ny=m;
-        for(int i=0; i<len; i++) {
-            nx+=dx[0];
-            ny+=dy[0];
-            board[nx][ny]=right[i];
-        }
-        
-        nx=m;
-        ny=m;
-        for(int i=0; i<len; i++) {
-            nx+=dx[1];
-            ny+=dy[1];
-            board[nx][ny]=up[i];
-        }
-        
-        nx=m;
-        ny=m;
-        for(int i=0; i<len; i++) {
-            nx+=dx[2];
-            ny+=dy[2];
-            board[nx][ny]=left[i];    
-        }
-        
-        nx=m;
-        ny=m;
-        for(int i=0; i<len; i++) {
-            nx+=dx[3];
-            ny+=dy[3];
-            board[nx][ny]=down[i];
-        }
-    }
     
     public static void dfs(int start, int depth, int[] arr) {
         if(depth==2) {
