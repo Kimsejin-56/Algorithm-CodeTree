@@ -83,23 +83,6 @@ public class Main {
         
     }
     
-    public static boolean isAvailable(List<Point> g1, List<Point> g2) {
-        for(Point p : g1) {
-            for(int i=0; i<4; i++) {
-                int nx=p.x+dx[i];
-                int ny=p.y+dy[i];
-                
-                if(nx>=0 && nx<n && ny>=0 && ny<n && board[p.x][p.y]!=board[nx][ny]) {
-                    for(Point p2 : g2) {
-                        if(p2.x==nx &&  p2.y==ny) return true;
-                    }
-                }
-            }
-        }
-        
-        return false;
-    }
-    
     public static int calc(List<Point> g1, List<Point> g2) {
         int s1=g1.size();
         int s2=g2.size();
@@ -129,9 +112,7 @@ public class Main {
     
     public static void dfs(int start, int depth, int[] arr) {
         if(depth==2) {
-            if(isAvailable(map.get(arr[0]), map.get(arr[1]))) {
-                total+=calc(map.get(arr[0]), map.get(arr[1]));
-            }
+            total+=calc(map.get(arr[0]), map.get(arr[1]));
         }else {
             for(int i=start; i<=map.size(); i++) {
                 arr[depth]=i;
