@@ -1,10 +1,15 @@
 import java.util.*;
 
-class Point{
+class Point implements Comparable<Point>{
     int x, y;
     public Point(int x, int y) {
         this.x=x;
         this.y=y;
+    }
+
+    public int compareTo(Point p) {
+        if(this.y==p.y) return this.x-p.x;
+        return this.y-p.y;
     }
 }
 
@@ -103,68 +108,62 @@ public class Main {
     }
     
     public static void moveCreature() {
-        int max=-1;
-        int num=0;
-        List<Info> list=new ArrayList<>();
-        
-        for(int i : map.keySet()) {
-            list.add(new Info(i, map.get(i).size()));
+        List<Info> order=new ArrayList<>();
+        int[][] nextBoard=new int[n][n];
+        Map<Integer, List<Point>> nextMap=new HashMap<>();
+
+        for(int key : map.keySet()){
+            order.add(new Info(key, map.get(key).size()));
         }
-        Collections.sort(list);
-        
-        int[][] copy=new int[n][n];
-        
-        for(int l=0; l<list.size(); l++) {
-            num=list.get(l).num;
-            List<Point> c=map.get(num);
-            int mx=n+1;
-            int my=n+1;
-            
-            for(Point t : c) {
-                mx=Math.min(mx, t.x);
-                my=Math.min(my, t.y);
+
+        Collections.sort(order);
+
+        for(Info i : order){
+            List<Point> creatures=map.get(i.num);
+            Collections.sort(creatures);
+            Point min=creatures.get(0);
+            List<Point> move=new ArrayList<>();
+
+            List<Point> relative=new ArrayList<>();
+
+            for(Point p : creatures){
+                relative.add(new Point(p.x-min.x, p.y-min.y));
             }
-            boolean possible=true;
             boolean placed=false;
-            for(int y=0; y<n; y++) {
-                for(int x=0; x<n; x++) {
-                    possible=true;
-                    
-                    for(Point t : c) {
-                        int nx=x+(t.x-mx);
-                        int ny=y+(t.y-my);
-                        
-                        if(nx<0 || nx>=n || ny<0 || ny>=n) {
-                            possible=false;
-                            break;
+            for(int y=0; y<n; y++){
+                for(int x=0; x<n; x++){
+                    if(canMove(x, y, relative, nextBoard)){
+                        for(Point p : relative){
+                            int nx=p.x+x;
+                            int ny=p.y+y;
+
+                            nextBoard[nx][ny]=i.num;
+                            move.add(new Point(nx, ny));
                         }
-                        
-                        if(copy[nx][ny]!=0) {
-                            possible=false;
-                            break;
-                        }
-                    }
-                    
-                    if(possible) {
-                        for(Point t : c) {
-                            int nx=x+(t.x-mx);
-                            int ny=y+(t.y-my);
-                            t.x=nx;
-                            t.y=ny;
-                            copy[nx][ny]=num;
-                            placed=true;
-                        }
+
+                        placed=true;
                         break;
                     }
                 }
-                if(possible) break;
+                if(placed) {
+                    nextMap.put(i.num, move);
+                    break;
+                }
             }
-            
-            if(!placed) map.remove(num);
         }
-        
-        board=copy;
-        
+
+        board=nextBoard;
+        map=nextMap;
+    }
+
+    public static boolean canMove(int x, int y, List<Point> list, int[][] arr){
+        for(Point p : list){
+            int nx=p.x+x;
+            int ny=p.y+y;
+
+            if(nx<0 || nx>=n || ny<0 || ny>=n || arr[nx][ny]!=0) return false;
+        }
+        return true;
     }
     
     public static void putCreature(Point p1, Point p2) {
