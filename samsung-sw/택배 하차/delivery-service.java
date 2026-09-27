@@ -66,7 +66,7 @@ public class Main {
             
             while(true) {
                 if(canMove(b)) {
-                    l=0;
+                    l=-1;
                     b.r++;
                 }else break;
             }
