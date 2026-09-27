@@ -50,11 +50,10 @@ public class Main {
         }
         
         for(int i : answer) System.out.println(i);
-        
-        
     }
     
     public static void down() {
+        box.sort((a, b) -> b.r-a.r);
         for(int l=0; l<box.size(); l++) {
             Point b=box.get(l);
             
@@ -66,11 +65,12 @@ public class Main {
             
             while(true) {
                 if(canMove(b)) {
-                    l=-1;
                     b.r++;
                 }else break;
             }
         }
+
+        Collections.sort(box);
     }
     
     public static int rightBox() {
