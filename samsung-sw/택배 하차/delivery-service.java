@@ -1,175 +1,187 @@
 import java.util.*;
 
-class Box implements Comparable<Box>{
-    int k, h, w, c, x;
+class Point implements Comparable<Point>{
+    int k, h, w, c, r;
 
-    public Box(int k, int h, int w, int c, int x){
+    public Point(int k, int h, int w, int c) {
         this.k=k;
         this.h=h;
         this.w=w;
         this.c=c;
-        this.x=x;
     }
-
-    public int compareTo(Box b){
-        return this.k - b.k;
+    
+    public int compareTo(Point p) {
+        return this.k-p.k;
     }
 }
 
 public class Main {
-    static int n,m;
-    static List<Box> answer=new ArrayList<>();
-    static List<Box> list=new ArrayList<>();
-    static boolean[][] visited; 
-    
+    static int n, m;
+    static int[][] board;
+    static List<Point> box;
     public static void main(String[] args) {
         Scanner sc=new Scanner(System.in);
         n=sc.nextInt();
         m=sc.nextInt();
-        visited=new boolean[n+1][n+1];
-        for(int i=0; i<m; i++){
-            int k=sc.nextInt();
-            int h=sc.nextInt();
-            int w=sc.nextInt();
-            int c=sc.nextInt();
-            Box b=new Box(k, h, w, c, 1);
-            list.add(b);
+        board=new int[n][n];
+        box=new ArrayList<>();
+        List<Integer> answer=new ArrayList<>();
+        
+        for(int i=0; i<m; i++) {
+            Point b=new Point(sc.nextInt(), sc.nextInt(), sc.nextInt(), sc.nextInt()-1);
+            b.r=b.h-1;
+            box.add(b);
         }
-
-        init();
-        Collections.sort(list);
-
-        while(!list.isEmpty()){
-            deleteBoxLeft();
+        
+        putBox();
+        
+        Collections.sort(box);
+        
+        int num=m;
+        if(num%2==0) num=m/2;
+        else num=m/2+1;
+        
+        for(int l=0; l<num; l++) {
+            answer.add(leftBox());
             down();
-            deleteBoxRight();
+            if(box.isEmpty()) break;
+            answer.add(rightBox());
             down();
         }
-
-        for(Box b : answer) System.out.println(b.k);
-
+        
+        for(int i : answer) System.out.println(i);
+        
+        
     }
-    static void down(){
-        boolean moved=true;
-        while(moved){
-            moved=false;
-
-            for(Box b : list){
-                if(!isDown(b)) continue;
-                
-                for(int i=0; i<b.h; i++){
-                    for(int j=b.c; j<b.c+b.w; j++){
-                        visited[b.x+i][j]=false;
-                    }
-                }
-
-                while(isDown(b)){
-                    b.x+=1;
-                    moved=true;
-                }
-
-                for(int i=0; i<b.h; i++){
-                    for(int j=b.c; j<b.c+b.w; j++){
-                        visited[b.x+i][j]=true;
-                    }
-                }
-
-            }
-        }
-    }
-
-    static void deleteBoxRight(){
-        for(int t=0; t<list.size(); t++){
-            Box b=list.get(t);
-            int tmpC=b.c;
-            while((tmpC+b.w)-1 < n){
-                if(isRight(b, tmpC)){
-                    tmpC+=1;
-                    continue;
-                } else break;
-            }
-
-            if((tmpC+b.w)-1==n){
-                for(int i=0; i<b.h; i++){
-                    for(int j=b.c; j<b.c+b.w; j++){
-                        visited[b.x+i][j]=false;
-                    }
-                }
-
-                list.remove(b);
-                answer.add(b);
-                return;
-            }
-        }
-    }
-
-    static void deleteBoxLeft(){
-        for(int t=0; t<list.size(); t++){
-            Box b=list.get(t);
-            int tmpC=b.c;
-            while(tmpC > 1){
-                if(isLeft(b, tmpC)){
-                    tmpC-=1;
-                    continue;
-                } else break;
-            }
-
-            if(tmpC==1){
-                for(int i=0; i<b.h; i++){
-                    for(int j=b.c; j<b.c+b.w; j++){
-                        visited[b.x+i][j]=false;
-                    }
-                }
-                list.remove(b);
-                answer.add(b);
-                return;
-            }
-        }
-    }
-
-    static void init(){
-        for(Box b : list){
-            while(true){
-                if(isDown(b)) {
-                    b.x+=1;
-                    continue;
-                } else break;
-            }
-
-            for(int i=0; i<b.h; i++){
-                for(int j=b.c; j<b.c+b.w; j++){
-                    visited[b.x+i][j]=true;
+    
+    public static void down() {
+        for(int l=0; l<box.size(); l++) {
+            Point b=box.get(l);
+            
+            for(int i=b.r; i>b.r-b.h; i--) {
+                for(int j=b.c; j<b.c+b.w; j++) {
+                    board[i][j]=0; 
                 }
             }
-
+            
+            while(true) {
+                if(canMove(b)) {
+                    l=0;
+                    b.r++;
+                }else break;
+            }
         }
     }
-
-    static boolean isLeft(Box b, int bc){
-        for(int i=0; i<b.h; i++){
-            int ny=bc-1;
-            if(ny>=1 && ny<=n && !visited[b.x+i][ny]) continue;
-            else return false;
+    
+    public static int rightBox() {
+        int num=0;
+        for(int l=0; l<box.size(); l++) {
+            Point b=box.get(l);
+            int c=b.c;
+            int r=b.r;
+            
+            if(!rightMove(b)) {
+                b.c=c;
+                b.r=r;
+                continue;
+            }
+            
+            //복구
+            for(int i=r; i>r-b.h; i--) {
+                for(int j=c; j<c+b.w; j++) {
+                    board[i][j]=0; 
+                }
+            }
+            
+            num=b.k;
+            box.remove(b);
+            break;
         }
-        return true;
+        return num;
     }
-
-    static boolean isRight(Box b, int bc){
-        for(int i=0; i<b.h; i++){
-            int ny=bc+b.w;
-            if(ny>=1 && ny<=n && !visited[b.x+i][ny]) continue;
-            else return false;
+    
+    public static boolean rightMove(Point b) {
+        while(b.c!=n-b.w) {
+            for(int i=b.r; i>b.r-b.h; i--) {
+                if(board[i][b.c+b.w]!=0) return false;
+            }
+            
+            b.c++;
         }
-        return true;
+        
+        if(b.c==n-b.w) return true;
+        return false;
     }
-
-    static boolean isDown(Box b){
-        for(int i=b.c; i<b.c+b.w; i++){
-            int nx=(b.x+b.h);
-            if(nx>=1 && nx<=n && !visited[nx][i]) continue;
-            else return false;
+    
+    public static int leftBox() {
+        int num=0;
+        for(int l=0; l<box.size(); l++) {
+            Point b=box.get(l);
+            int c=b.c;
+            int r=b.r;
+            
+            if(!leftMove(b)) {
+                b.c=c;
+                b.r=r;
+                continue;
+            }
+            
+            //복구
+            for(int i=r; i>r-b.h; i--) {
+                for(int j=c; j<c+b.w; j++) {
+                    board[i][j]=0; 
+                }
+            }
+            
+            num=b.k;
+            box.remove(b);
+            break;
         }
-
-        return true;
+        return num;
+    }
+    
+    public static boolean leftMove(Point b) {
+        while(b.c!=0) {
+            for(int i=b.r; i>b.r-b.h; i--) {
+                if(board[i][b.c-1]!=0) return false;
+            }
+            
+            b.c--;
+        }
+        
+        if(b.c==0) return true;
+        return false;
+    }
+    
+    public static void putBox() {
+        for(int i=0; i<m; i++) {
+            Point b=box.get(i);
+            
+            while(true) {
+                if(canMove(b)) {
+                    b.r++;
+                }else break;
+            }
+        }
+    }
+    
+    public static boolean canMove(Point b) {
+        int cnt=0;
+        
+        if(b.r<n-1) {
+            for(int j=b.c; j<b.c+b.w; j++) {
+                if(board[b.r+1][j]==0) cnt++; 
+            }
+        }
+        
+        if(cnt==b.w) return true;
+        
+        for(int i=b.r; i>b.r-b.h; i--) {
+            for(int j=b.c; j<b.c+b.w; j++) {
+                board[i][j]=b.k; 
+            }
+        }
+        
+        return false;
     }
 }
