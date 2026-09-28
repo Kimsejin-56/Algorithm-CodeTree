@@ -18,6 +18,7 @@ public class Main {
     static List<Point> peoples;
     static int[][] board, dist;
     static Point house, park, target;
+    
     public static void main(String[] args) {
         Scanner sc=new Scanner(System.in);
         n=sc.nextInt();
@@ -198,168 +199,59 @@ public class Main {
     public static void exist(int[][] eye, Point p){
         if(eye[p.x][p.y]==0) return;
 
-        int rx=p.x-target.x;
-        int ry=p.y-target.y;
-        int si=0;
-        int sj=0;
-        if(target.dir==0){
-            for(int i=p.x-1; i>=0; i--) eye[i][p.y]=0;
-            if(ry<0){
-                si=p.x-1;
-                for(int j=p.y-1; j>=0; j--){
-                    for(int i=si; i>=0; i--){
-                        eye[i][j]=0;
-                    }
-                    si-=1;
-                }
-            }else if(ry>0) {
-                si=p.x-1;
-                for(int j=p.y+1; j<n; j++){
-                    for(int i=si; i>=0; i--){
-                        eye[i][j]=0;
-                    }
-                    si-=1;
-                }
-            }
-        }else if(target.dir==1) {
-            for(int i=p.x+1; i<n; i++) eye[i][p.y]=0;
-            if(ry<0){
-                si=p.x+1;
-                for(int j=p.y-1; j>=0; j--){
-                    for(int i=si; i<n; i++){
-                        eye[i][j]=0;
-                    }
-                    si+=1;
-                }
-            }else if(ry>0){
-                si=p.x+1;
-                for(int j=p.y+1; j<n; j++){
-                    for(int i=si; i<n; i++){
-                        eye[i][j]=0;
-                    }
-                    si+=1;
-                }
-            }
-        }else if(target.dir==2) {
-            for(int i=p.y-1; i>=0; i--) eye[p.x][i]=0;
-            if(rx<0){
-                sj=p.y-1;
-                for(int i=p.x-1; i>=0; i--){
-                    for(int j=sj; j>=0; j--){
-                        eye[i][j]=0;
-                    }
-                    sj-=1;
-                }
-            }else if(rx>0) {
-                sj=p.y-1;
-                for(int i=p.x+1; i<n; i++){
-                    for(int j=sj; j>=0; j--){
-                        eye[i][j]=0;
-                    }
-                    sj-=1;
-                }
-            }
-        }else {
-            for(int i=p.y+1; i<n; i++) eye[p.x][i]=0;
-            if(rx<0){
-                sj=p.y+1;
-                for(int i=p.x-1; i>=0; i--){
-                    for(int j=sj; j<n; j++){
-                        eye[i][j]=0;
-                    }
-                    sj+=1;
-                }
-            }else if(rx>0){
-                sj=p.y+1;
-                for(int i=p.x+1; i<n; i++){
-                    for(int j=sj; j<n; j++){
-                        eye[i][j]=0;
-                    }
-                    sj+=1;
-                }
+        int wf=getFront(p.x, p.y, target.dir);
+        int ws=getSide(p.x, p.y, target.dir);
+
+
+        for(int x=0; x<n; x++) {
+            for(int y=0; y<n; y++) {
+                if(eye[x][y]==0) continue;
+                if(p.x==x && p.y==y)continue;
+                
+                 int f=getFront(x, y, target.dir);
+                 int s=getSide(x, y, target.dir);
+
+                 if(f<=wf) continue;
+                 
+                 int gap=f-wf;
+
+                 if(ws==0) {
+                     if(s==0) eye[x][y]=0;
+                 }else if(ws<0) {
+                     if(ws-gap<=s&& s<=ws) eye[x][y]=0;
+                 }else {
+                     if(ws<=s&&s<=ws+gap) eye[x][y]=0;
+                 }
             }
         }
-
     }
 
     public static int[][] range(int dir){
         int[][] eye=new int[n][n];
-        int si=0;
-        int sj=0;
-        if(dir==0){
-            si=target.x-1;
-            for(int j=target.y-1; j>=0; j--){
-                for(int i=si; i>=0; i--){
-                    eye[i][j]=1;
+       
+        for(int x=0; x<n; x++) {
+            for(int y=0; y<n; y++) {
+                int front=getFront(x, y, dir);
+                int side=getSide(x, y, dir);
+                
+                if(front>0 && Math.abs(side)<=front) {
+                    eye[x][y]=1;
                 }
-                si-=1;
-            }
-
-            for(int j=target.x-1; j>=0; j--) eye[j][target.y]=1;
-
-            si=target.x-1;
-            for(int j=target.y+1; j<n; j++){
-                for(int i=si; i>=0; i--){
-                    eye[i][j]=1;
-                }
-                si-=1;
-            }
-        }else if(dir==1){
-            si=target.x+1;
-            for(int j=target.y-1; j>=0; j--){
-                for(int i=si; i<n; i++){
-                    eye[i][j]=1;
-                }
-                si+=1;
-            }
-
-            for(int j=target.x+1; j<n; j++) eye[j][target.y]=1;
-
-            si=target.x+1;
-            for(int j=target.y+1; j<n; j++){
-                for(int i=si; i<n; i++){
-                    eye[i][j]=1;
-                }
-                si+=1;
-            }
-        }else if(dir==2){
-            sj=target.y-1;
-            for(int i=target.x-1; i>=0; i--){
-                for(int j=sj; j>=0; j--){
-                    eye[i][j]=1;
-                }
-                sj-=1;
-            }
-
-            for(int j=target.y-1; j>=0; j--) eye[target.x][j]=1;
-
-            sj=target.y-1;
-            for(int i=target.x+1; i<n; i++){
-                for(int j=sj; j>=0; j--){
-                    eye[i][j]=1;
-                }
-                sj-=1;
-            }
-        }else if(dir==3){
-            sj=target.y+1;
-            for(int i=target.x-1; i>=0; i--){
-                for(int j=sj; j<n; j++){
-                    eye[i][j]=1;
-                }
-                sj+=1;
-            }
-
-            for(int j=target.y+1; j<n; j++) eye[target.x][j]=1;
-
-            sj=target.y+1;
-            for(int i=target.x+1; i<n; i++){
-                for(int j=sj; j<n; j++){
-                    eye[i][j]=1;
-                }
-                sj+=1;
             }
         }
 
         return eye;
+    }
+    
+    public static int getFront(int x, int y, int dir) {
+        if(dir==0) return target.x-x;
+        else if(dir==1) return x-target.x;
+        else if(dir==2) return target.y-y;
+        else return y-target.y;
+    }
+    
+    public static int getSide(int x, int y, int dir) {
+        if(dir==0 || dir==1) return y-target.y;
+        return x-target.x;
     }
 }
