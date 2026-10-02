@@ -94,7 +94,6 @@ public class Main {
                 int npa=np.a+np.s;
                 
                 if(npa<pa) {
-                    p.score+=pa-npa;
                     win=p;
                     lose=np;
                 }else if(npa==pa) {
@@ -106,10 +105,11 @@ public class Main {
                         lose=p;
                     }
                 }else {
-                    np.score+=npa-pa;
                     win=np;
                     lose=p;
                 }
+
+                win.score+=Math.abs(npa-pa);
                 break;
             }
         }
