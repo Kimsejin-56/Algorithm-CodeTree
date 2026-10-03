@@ -1,206 +1,171 @@
 import java.util.*;
 
 class Point{
-    int x, y, limit, num, v, tmp;
-    public Point(int x, int y){
+    int x, y, p, cp, dir, num;
+    boolean dead, pass;
+    
+    public Point(int x, int y) {
         this.x=x;
         this.y=y;
     }
 
-    public Point(int x, int y, int limit){
+    public Point(int x, int y, int p) {
         this.x=x;
         this.y=y;
-        this.limit=limit;
+        this.p=p;
     }
 }
-public class Main {
-    static int[] dx={0, 1, 0, -1};
-    static int[] dy={1, 0, -1, 0};
-    static int n, m, k;
-    static int[][] arr;
-    static boolean[][] visited;
 
+public class Main {
+    static int n, m ,k;
+    static int[] dx= {0, 1, 0, -1};
+    static int[] dy= {1, 0, -1, 0};
+    static int[][] board;
+    static int[] answer;
+    static List<Point> tutles=new ArrayList<>();
+    static List<Point> volcanos=new ArrayList<>();
     public static void main(String[] args) {
         Scanner sc=new Scanner(System.in);
         n=sc.nextInt();
         m=sc.nextInt();
         k=sc.nextInt();
-        arr=new int[n][n];
-        int[] answer=new int[m];
-        List<Point> tutles=new ArrayList<>();
-        List<Point> vol=new ArrayList<>();
-        visited=new boolean[n][n];
         int turn=1;
-
-        for(int i=0; i<n; i++){
-            for(int j=0; j<n; j++){
-                arr[i][j]=sc.nextInt();
+        answer=new int[m];
+        board=new int[n][n];
+        
+        for(int i=0; i<n; i++) {
+            for(int j=0; j<n; j++) {
+                board[i][j]=sc.nextInt();
             }
         }
-
-        for(int i=0; i<m; i++){
-            Point t=new Point(sc.nextInt(), sc.nextInt());
-            t.num=i;
-            visited[t.x][t.y]=true;
-            tutles.add(t);
+        
+        for(int i=0; i<m; i++) {
+            Point tutle=new Point(sc.nextInt(), sc.nextInt());
+            tutle.num=i;
+            tutles.add(tutle);
         }
-
-        for(int i=0; i<k; i++){
-            vol.add(new Point(sc.nextInt(), sc.nextInt(), sc.nextInt()));
+        
+        for(int i=0; i<k; i++) {
+            volcanos.add(new Point(sc.nextInt(), sc.nextInt(), sc.nextInt()));
         }
-
-        while(turn<=100){
-            for(int i=0; i<tutles.size(); i++){
-                Point p=tutles.get(i);
-                move(p);
-                if(p.x==n-1 && p.y==n-1){
-                    answer[p.num]=turn;
-                    visited[p.x][p.y]=false;
-                    tutles.remove(p);
+        
+        while(turn<=100) {
+            for(int i=0; i<tutles.size(); i++) {
+                Point t=tutles.get(i);
+                if(t.dead) continue;
+                move(t);
+                if(t.x==n-1 && t.y==n-1) {
+                    answer[t.num]=turn;
+                    tutles.remove(t);
                     i--;
                 }
             }
-
-            plus(vol);
-            action(vol, tutles);
-
+            
+            addPress();
+            actionVolcano();
+            init();
             turn++;
         }
-
-        for(int i=0; i<m; i++){
-            if(answer[i]==0){
-                System.out.println(-1);
-                continue;
-            }
-            System.out.println(answer[i]);
+        
+        for(int i=0; i<m; i++) {
+            if(answer[i]==0) System.out.println("-1");
+            else System.out.println(answer[i]);
         }
     }
-
-    public static void move(Point s){
-        boolean[][] check=new boolean[n][n];
+    
+    static void init() {
+        for(Point v : volcanos) {
+            if(v.pass) {
+                v.cp=0;
+                v.pass=false;
+            }
+        }
+    }
+    
+    static void actionVolcano() {
+        int[][] copy=new int[n][n];
+        for(int i=0; i<volcanos.size(); i++) {
+            Point v=volcanos.get(i);
+            if(v.pass) continue;
+            
+            if(v.p<=copy[v.x][v.y]+v.cp) {
+                spread(v, copy);
+                v.pass=true;
+                i=-1;
+            }
+        }
+        
+        //거북이 죽음 유무 확인
+        for(Point t : tutles) {
+            if(copy[t.x][t.y]>=20) {
+                t.dead=true;
+                answer[t.num]=-1;
+            }
+        }
+    }
+    
+    static void spread(Point p, int[][] copy) {
+        copy[p.x][p.y]+=p.p;
+        
+        for(int d=0; d<4; d++) {
+            int num=p.p/2;
+            int x=p.x;
+            int y=p.y;
+            
+            while(num!=0) {
+                x+=dx[d];
+                y+=dy[d];
+                if(x>=0 && x<n&& y>=0 && y<n && board[x][y]!=1) {
+                    copy[x][y]+=num;
+                    num/=2;
+                }else break;
+            }
+        }
+    }
+    
+    static void addPress() {
+        for(Point v : volcanos) {
+            v.cp+=10;
+        }
+    }
+    
+    static void move(Point s) {
         Queue<Point> q=new ArrayDeque<>();
+        boolean[][] visited=new boolean[n][n];
         q.offer(s);
-        check[s.x][s.y]=true;
-        s.tmp=-1;
-
-        while(!q.isEmpty()){
+        s.dir=-1;
+        visited[s.x][s.y]=true;
+        
+        while(!q.isEmpty()) {
             Point p=q.poll();
-
-            if(p.x==n-1 && p.y==n-1){
-                visited[s.x][s.y]=false;
-
-                if(p.tmp==-1) return;
-
-                s.x+=dx[p.tmp];
-                s.y+=dy[p.tmp];
-                visited[s.x][s.y]=true;
+            
+            if(p.x==n-1 && p.y==n-1) {
+                s.x+=dx[p.dir];
+                s.y+=dy[p.dir];
                 return;
             }
-
-            for(int i=0; i<4; i++){
+            
+            for(int i=0; i<4; i++) {
                 int nx=p.x+dx[i];
                 int ny=p.y+dy[i];
-
-                if(nx>=0 && nx<n && ny>=0 && ny<n && arr[nx][ny]==0 && !visited[nx][ny] && !check[nx][ny]){
+                
+                if(nx>=0 && nx<n && ny>=0 && ny<n && board[nx][ny]==0 && 
+                        !visited[nx][ny] && !hasTutle(nx, ny)) {
                     Point t=new Point(nx, ny);
-
-                    if(p.tmp==-1) t.tmp=i;
-                    else t.tmp=p.tmp;
-
-                    check[nx][ny]=true;
                     q.offer(t);
+                    visited[nx][ny]=true;
+                    if(p.dir==-1) t.dir=i;
+                    else t.dir=p.dir;
                 }
             }
         }
+     }
+    
+    static boolean hasTutle(int x, int y) {
+        for(Point p : tutles) {
+            if(p.x==x && p.y==y) return true;
+        }
+        return false;
     }
-
-    public static void plus(List<Point> vol){
-        for(Point p : vol) p.v+=10;
-    }
-
-    public static void action(List<Point> vol, List<Point> tutles){
-        int[][] board=new int[n][n];
-        boolean[] boom=new boolean[vol.size()];
-        boolean again=true;
-
-        while(again){
-            again=false;
-
-            for(int i=0; i<vol.size(); i++){
-                Point p=vol.get(i);
-                if(!boom[i] && p.v+board[p.x][p.y]>=p.limit){
-                    boom[i]=true;
-                    again=true;
-                    arrVol(p, board);
-                }
-            }
-        }
-
-        for(int i=0; i<vol.size(); i++){
-            if(boom[i]) vol.get(i).v=0;
-        } 
-       
-
-        for(int i=0; i<tutles.size(); i++){
-            Point p=tutles.get(i);
-            p.v=board[p.x][p.y];
-            if(p.v>=20){
-                arr[p.x][p.y]=4;
-                tutles.remove(p);
-                i--;
-            }
-        }
-    }
-
-    public static void arrVol(Point p, int[][] board){
-        int v=p.limit;
-        int x=p.x;
-        int y=p.y;
-        board[x][y]+=v;
-
-        while(v!=0){
-            v=v/2;
-            y++;
-             if(x>=0 && x<n && y>=0 && y<n){
-                if(arr[x][y]==1) break;
-                board[x][y]+=v;
-            } 
-        }
-
-        x=p.x;
-        y=p.y;
-        v=p.limit;
-        while(v!=0){
-            v=v/2;
-            y--;
-            if(x>=0 && x<n && y>=0 && y<n){
-                if(arr[x][y]==1) break;
-                board[x][y]+=v;
-            } 
-        }
-
-        x=p.x;
-        y=p.y;
-        v=p.limit;
-        while(v!=0){
-            v=v/2;
-            x++;
-             if(x>=0 && x<n && y>=0 && y<n){
-                if(arr[x][y]==1) break;
-                board[x][y]+=v;
-            } 
-        }
-
-        x=p.x;
-        y=p.y;
-        v=p.limit;
-        while(v!=0){
-            v=v/2;
-            x--;
-            if(x>=0 && x<n && y>=0 && y<n){
-                if(arr[x][y]==1) break;
-                board[x][y]+=v;
-            } 
-        }
-    }
+    
 }
