@@ -73,7 +73,7 @@ public class Main {
     static void search() {
         int[][] copy=new int[n][n];
         int[][] next=new int[n][n];
-        int max=-1;
+        int max=0;
         int mdir=4;
         int mx=6;
         int my=6;
