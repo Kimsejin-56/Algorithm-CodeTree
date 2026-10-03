@@ -2,155 +2,181 @@ import java.util.*;
 
 class Point implements Comparable<Point>{
     int x, y, num, dir;
-    public Point(int x, int y){
+    boolean close;
+    public Point(int x, int y) {
         this.x=x;
         this.y=y;
     }
-
-    public int compareTo(Point p){
-        if(this.x==p.x) return this.y-p.y;
+    
+    public int compareTo(Point p) {
+        if(p.x==this.x) return this.y-p.y;
         return this.x-p.x;
     }
 }
 
 public class Main {
-    static int n,m;
+    static int n, m; 
+    static int[] dx= {-1, 0, 0, 1};
+    static int[] dy= {0, -1, 1, 0};
     static int[][] board;
-    static List<Point> stores, peoples, camps;
-    static int[] dx={-1, 0, 0, 1};
-    static int[] dy={0, -1, 1, 0};
-    static boolean[][] check;
-
+    static List<Point> stores=new ArrayList<>();
+    static List<Point> camps=new ArrayList<>();
+    static List<Point> peoples=new ArrayList<>();
+    
     public static void main(String[] args) {
-        Scanner sc= new Scanner(System.in);
+        Scanner sc=new Scanner(System.in);
         n=sc.nextInt();
         m=sc.nextInt();
         board=new int[n][n];
-        check=new boolean[n][n];
-        stores=new ArrayList<>();
-        peoples=new ArrayList<>();
-        camps=new ArrayList<>();
-        ArrayList<Point>list=new ArrayList<>();
-        int t=1;
-
-        for(int i=0; i<n; i++){
-            for(int j=0; j<n; j++){
+        int turn=1;
+        
+        for(int i=0; i<n; i++) {
+            for(int j=0; j<n; j++) {
                 board[i][j]=sc.nextInt();
                 if(board[i][j]==1) camps.add(new Point(i, j));
             }
         }
-
-        for(int i=0; i<m; i++){
-            Point p=new Point(sc.nextInt()-1, sc.nextInt()-1);
-            stores.add(p);
+        
+        for(int i=0; i<m; i++) {
+            Point s=new Point(sc.nextInt()-1, sc.nextInt()-1);
+            s.num=i+1;
+            stores.add(s);
         }
-
-        int cnt=0;
-        while(cnt!=m){
-            for(Point p : peoples){
-                move(p);
+        
+        while(true) {
+            for(Point p : peoples) {
+                if(p.close) continue;
+                Point store=stores.get(p.num-1);
+                move(p, store);
             }
 
-
-            for(int i=0; i<peoples.size(); i++){
-                Point p=peoples.get(i);
-                Point store=stores.get(p.num);
-                if(p.x==store.x && p.y==store.y){
-                    check[store.x][store.y]=true;
-                    cnt++;
-                    peoples.remove(p);
-                    i--;
-                    if(cnt==m) {
-                        System.out.println(t);
-                        return;
-                    }
+            for(Point p : peoples) {
+                if(p.close) continue;
+                Point store=stores.get(p.num-1);
+                if(p.x==store.x && p.y==store.y) {
+                    p.close=true;
+                    store.close=true;
                 }
             }
-
-            if(t<=m){
-                int min=Integer.MAX_VALUE;
-                Point s=stores.get(t-1);
-                int[][] dis=bfs(s);
-                for(Point c : camps){
-                    if(check[c.x][c.y]) continue;
-                    int num=dis[c.x][c.y];
-                    if(num==-1) continue;
-                    if(min>num){
-                        min=num;
-                        list.clear();
-                        list.add(c);
-                    } else if(min==num){
-                        list.add(c);
-                    }
-                }
-
-                Collections.sort(list);
-                Point select=list.get(0);
-                check[select.x][select.y]=true;
-                Point people=new Point(select.x, select.y);
-                people.num=t-1;
-                peoples.add(people);
+            
+            if(turn<=m) {
+                selectStroe(turn);
             }
-
-            t++;
+            
+            int cnt=0;
+            for(Point p : peoples) {
+                if(p.close) cnt++;
+            }
+            
+            if(cnt==m) {
+                System.out.println(turn);
+                return;
+            }    
+            
+            turn++;
         }
     }
-
-    public static void move(Point s){
+    
+    static void move(Point s, Point e) {
         Queue<Point> q=new ArrayDeque<>();
         boolean[][] visited=new boolean[n][n];
         q.offer(s);
         visited[s.x][s.y]=true;
-        Point arrive=stores.get(s.num);
         s.dir=-1;
-
-        while(!q.isEmpty()){
+        
+        while(!q.isEmpty()) {
             Point p=q.poll();
-
-            if(arrive.x==p.x && arrive.y==p.y){
+            
+            if(p.x==e.x && p.y==e.y) {
                 s.x+=dx[p.dir];
                 s.y+=dy[p.dir];
                 return;
             }
-
-            for(int i=0; i<4; i++){
+            
+            for(int i=0; i<4; i++) {
                 int nx=p.x+dx[i];
                 int ny=p.y+dy[i];
-
-                if(nx>=0 && nx<n && ny>=0 && ny<n && !visited[nx][ny] && !check[nx][ny]){
-                    Point next=new Point(nx, ny);
-                    if(p.dir==-1) next.dir=i;
-                    else next.dir=p.dir;
-                    q.offer(next);
+                
+                if(nx>=0 && nx<n && ny>=0 && ny<n && !visited[nx][ny] && isMove(nx, ny)) {
                     visited[nx][ny]=true;
+                    Point np=new Point(nx, ny);
+                    if(p.dir==-1) np.dir=i;
+                    else np.dir=p.dir;
+                    q.offer(np);
                 }
             }
+                
         }
     }
-
-    public static int[][] bfs(Point s){
-        Queue<Point> q=new ArrayDeque<>();
-        int[][] dis=new int[n][n];
-        for(int i=0; i<n; i++){
-            Arrays.fill(dis[i], -1);
+    
+    static void selectStroe(int t) {
+        Point store=stores.get(t-1);
+        int min=Integer.MAX_VALUE;
+        List<Point> list=new ArrayList<>();
+        
+        for(Point c : camps) {
+            if(c.close) continue;
+            int num=bfs(c, store);
+            
+            if(min>num) {
+                min=num;
+                list.clear();
+                list.add(c);
+            }else if(min==num) list.add(c);
         }
-        dis[s.x][s.y]=0;
+        
+        Collections.sort(list);
+        Point camp=list.get(0);
+        camp.close=true;
+        Point p=new Point(camp.x, camp.y);
+        p.num=t;
+        peoples.add(p);
+        
+    }
+    
+    static int bfs(Point s, Point e) {
+        Queue<Point> q=new ArrayDeque<>();
+        boolean[][] visited=new boolean[n][n];
         q.offer(s);
+        visited[s.x][s.y]=true;
         int level=0;
-
-        while(!q.isEmpty()){
-            Point p=q.poll();
-
-            for(int i=0; i<4; i++){
-                int nx=p.x+dx[i];
-                int ny=p.y+dy[i];
-
-                if(nx>=0 && nx<n && ny>=0 && ny<n && dis[nx][ny]==-1 && !check[nx][ny]){
-                    q.offer(new Point(nx, ny));
-                    dis[nx][ny]=dis[p.x][p.y]+1;
+        
+        while(!q.isEmpty()) {
+            int len=q.size();
+            
+            for(int l=0; l<len; l++) {
+                Point p=q.poll();
+                
+                if(p.x==e.x && p.y==e.y) {
+                    return level;
+                }
+                
+                for(int i=0; i<4; i++) {
+                    int nx=p.x+dx[i];
+                    int ny=p.y+dy[i];
+                    
+                    if(nx>=0 && nx<n && ny>=0 && ny<n && !visited[nx][ny] && isMove(nx, ny)) {
+                        visited[nx][ny]=true;
+                        q.offer(new Point(nx, ny));
+                    }
                 }
             }
+            level++;
         }
-        return dis;
+        return Integer.MAX_VALUE;
+    }
+    
+    static boolean isMove(int x, int y) {
+        for(Point c : camps) {
+            if(!c.close) continue;
+            if(c.x==x && c.y==y) return false;
+        }
+        
+        for(Point s : stores) {
+            if(!s.close) continue;
+            if(s.x==x && s.y==y) return false;
+        }
+        
+        return true;
     }
 }
