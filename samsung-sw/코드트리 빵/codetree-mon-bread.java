@@ -117,6 +117,7 @@ public class Main {
         for(Point c : camps) {
             if(c.close) continue;
             int num=bfs(c, store);
+            if(num==-1) continue;
             
             if(min>num) {
                 min=num;
@@ -163,7 +164,7 @@ public class Main {
             }
             level++;
         }
-        return Integer.MAX_VALUE;
+        return -1;
     }
     
     static boolean isMove(int x, int y) {
