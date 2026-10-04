@@ -87,17 +87,14 @@ public class Main {
         while(true) {
             if(isDown(p)) {
                 p.x++;
-                continue;
             }else if(isLeft(p)) {
                 p.y--;
                 p.x++;
                 p.oclock();
-                continue;
             }else if(isRight(p)) {
                 p.y++;
                 p.x++;
                 p.clock();
-                continue;
             }else break;
         }
         
