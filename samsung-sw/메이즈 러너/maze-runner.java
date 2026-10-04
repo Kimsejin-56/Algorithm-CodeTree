@@ -73,10 +73,6 @@ public class Main {
     }
     
     static void simulataion() {
-        int ms=Integer.MAX_VALUE;
-        int mx=Integer.MAX_VALUE;
-        int my=Integer.MAX_VALUE;
-        
         for(int l=2; l<=n; l++) {
             for(int i=0; i<=n-l; i++) {
                 for(int j=0; j<=n-l; j++) {
@@ -181,4 +177,3 @@ public class Main {
         return Math.abs(x1-x2)+Math.abs(y1-y2);
     }
 }
-
