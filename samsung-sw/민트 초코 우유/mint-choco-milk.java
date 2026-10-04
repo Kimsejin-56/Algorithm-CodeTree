@@ -83,7 +83,7 @@ public class Main {
         });
         
         for(Point p : represents) {
-            if(defend[p.x][p.y]>=turn) {
+            if(defend[p.x][p.y]==turn) {
                 continue;
             }
             
