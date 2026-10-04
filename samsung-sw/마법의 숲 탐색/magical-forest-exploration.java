@@ -85,24 +85,20 @@ public class Main {
     
     static void move(Point p) {
         while(true) {
-            while(isDown(p)) {
+            if(isDown(p)) {
                 p.x++;
-            }
-            
-            if(isLeft(p)) {
+                continue;
+            }else if(isLeft(p)) {
                 p.y--;
                 p.x++;
                 p.oclock();
                 continue;
-            }
-      
-            if(isRight(p)) {
+            }else if(isRight(p)) {
                 p.y++;
                 p.x++;
                 p.clock();
                 continue;
-            }
-            break;
+            }else break;
         }
         
         board[p.x-1][p.y]=p.num;
