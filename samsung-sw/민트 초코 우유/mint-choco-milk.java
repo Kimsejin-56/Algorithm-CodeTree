@@ -1,198 +1,208 @@
 import java.util.*;
 
-class Point implements Comparable<Point>{
-    int x, y, num;
-    String type;
-    public Point(int x, int y){
+class Point{
+    int x, y;
+
+    public Point (int x, int y) {
         this.x=x;
         this.y=y;
-    }
-
-    public int compareTo(Point p){
-        if(this.num==p.num){
-            if(this.x==p.x) return this.y-p.y;
-            return this.x-p.x;
-        }
-        return p.num-this.num;
     }
 }
 
 public class Main {
     static int n, t;
-    static int[][] board;
-    static String[][] types;
-    static int[] dx={-1, 1, 0, 0};
-    static int[] dy={0, 0, -1, 1};
-    static List<Point> represent;
-    static String[] names={"TCM", "TC", "TM", "CM", "M", "C", "T"};
-    static boolean[][] defend;
-
+    static String[][] foods;
+    static int[][] board, defend;
+    static List<Point> represents=new ArrayList<>();
+    static int[] dx= {-1, 1, 0, 0};
+    static int[] dy= {0, 0, -1, 1};
+    
     public static void main(String[] args) {
         Scanner sc=new Scanner(System.in);
         n=sc.nextInt();
         t=sc.nextInt();
         board=new int[n][n];
-        types=new String[n][n];
-        int turn=0;
-        represent=new ArrayList<>();
-
+        defend=new int[n][n];
+        foods=new String[n][n];
+        int turn=1;
+        Map<String, Integer> map=new HashMap<>();
+        String[] names= {"TCM", "TC", "TM", "CM", "M", "C", "T"};
+        
         sc.nextLine();
-        for(int i=0; i<n; i++){
+        for(int i=0; i<n; i++) {
             String str=sc.nextLine();
-            for(int j=0; j<n; j++){
-                types[i][j]=String.valueOf(str.charAt(j));
+            for(int j=0; j<n; j++) {
+                foods[i][j]=String.valueOf(str.charAt(j));
             }
         }
-
-        for(int i=0; i<n; i++){
-            for(int j=0; j<n; j++){
+  
+        for(int i=0; i<n; i++) {
+            for(int j=0; j<n; j++) {
                 board[i][j]=sc.nextInt();
             }
         }
-
-        while(turn<t){
-            defend=new boolean[n][n];
+        
+        while(turn<=t) {
             morning();
             lunch();
-            evening();
-            represent.clear();
-            clac();
+            evening(turn);
+            
+            for(int i=0; i<names.length; i++) {
+                map.put(names[i], 0);
+            }
+            
+            for(int i=0; i<n; i++) {
+                for(int j=0; j<n; j++) {
+                    map.put(foods[i][j], map.get(foods[i][j])+board[i][j]);
+                }
+            }
+            for(int i=0; i<names.length; i++) {
+                System.out.print(map.get(names[i])+" ");
+            }
+            System.out.println();
+            
+            represents.clear();
+            map.clear();
             turn++;
         }
     }
-
-    public static void morning(){
-        for(int i=0; i<n; i++){
-            for(int j=0; j<n; j++){
+    static void evening(int turn) {
+        represents.sort((a, b) -> {
+            int al=foods[a.x][a.y].length();
+            int bl=foods[b.x][b.y].length();
+            
+            if(al!=bl) return al-bl;
+            
+            int ab=board[a.x][a.y];
+            int bb=board[b.x][b.y];
+            
+            if(ab!=bb) return bb-ab;
+            if(a.x!=b.x) return a.x-b.x;
+            return a.y-b.y;
+            
+        });
+        
+        for(Point p : represents) {
+            if(defend[p.x][p.y]==turn) {
+                continue;
+            }
+            
+            int b=board[p.x][p.y];
+            int x=b-1;
+            int dir=b%4;
+            board[p.x][p.y]=1;
+            
+            int nx=p.x+dx[dir];
+            int ny=p.y+dy[dir];
+            
+            while(nx>=0 && nx<n && ny>=0 && ny<n && x>0) {
+                if(foods[p.x][p.y].equals(foods[nx][ny])) {
+                    nx+=dx[dir];
+                    ny+=dy[dir];
+                    continue; 
+                }
+                
+                int y=board[nx][ny];
+                
+                if(x>y) {
+                    foods[nx][ny]=foods[p.x][p.y];
+                    x-=(y+1);
+                    board[nx][ny]++;
+                }else {
+                    String str=foods[nx][ny]+foods[p.x][p.y];
+                    str=containFood(str);
+                    foods[nx][ny]=str;
+                    board[nx][ny]+=x;
+                    x=0;
+                }
+                
+                defend[nx][ny]=turn;
+                
+                nx+=dx[dir];
+                ny+=dy[dir];
+            }
+        }
+    }
+    
+    static String containFood(String str) {
+        String s="";
+        if(str.contains("T")) s+="T";
+        if(str.contains("C")) s+="C";
+        if(str.contains("M")) s+="M";
+        return s;
+    }
+    
+    static void morning() {
+        for(int i=0; i<n; i++) {
+            for(int j=0; j<n; j++) {
                 board[i][j]++;
             }
         }
     }
-
-    public static void lunch(){
+    
+    static void lunch() {
         boolean[][] visited=new boolean[n][n];
-        for(int i=0; i<n; i++){
-            for(int j=0; j<n; j++){
+        
+        
+        for(int i=0; i<n; i++) {
+            for(int j=0; j<n; j++) {
                 if(visited[i][j]) continue;
-                Point p=new Point(i, j);
-                p.type=types[i][j];
-                represent.add(bfs(p, visited));
-            }
-        }
-    }
-
-    public static void evening(){
-        List<Point> small=new ArrayList<>();
-        List<Point> midium=new ArrayList<>();
-        List<Point> large=new ArrayList<>();
-        List<Point> list=new ArrayList<>();
-
-        for(Point p : represent){
-            if(p.type.length()==1) small.add(p);
-            else if(p.type.length()==2) midium.add(p);
-            else large.add(p);
-        }
-
-        Collections.sort(small);
-        Collections.sort(midium);
-        Collections.sort(large);
-        list.addAll(small);
-        list.addAll(midium);
-        list.addAll(large);
-
-        for(Point p : list) {
-            if(defend[p.x][p.y]) continue;
-            int x = board[p.x][p.y] - 1;
-            int dir=board[p.x][p.y] % 4;
-            board[p.x][p.y] = 1;
-            while (x != 0) {
-                int nx = p.x + dx[dir];
-                int ny = p.y + dy[dir];
-
-                if (nx >= 0 && nx < n && ny >= 0 && ny < n) {
-                    if(types[nx][ny].equals(p.type)) {
-                        p.x=nx;
-                        p.y=ny;
-                        continue;
-                    }
-
-                    int y=board[nx][ny];
-
-                    if(x>y){
-                        x-=(y+1);
-                        types[nx][ny]=p.type;
-                        board[nx][ny]+=1;
-                    }else{
-                        String type=match(types[nx][ny]+p.type);
-                        types[nx][ny]=type;
-                        board[nx][ny]+=x;
-                        x=0;
-                    }
-                    defend[nx][ny]=true;
-                    p.x=nx;
-                    p.y=ny;
-                }else break;
-            }
-        }
-    }
-
-    public static void clac(){
-        for(int l=0; l<names.length; l++){
-            String name=names[l];
-            int sum=0;
-            for(int i=0; i<n; i++){
-                for(int j=0; j<n; j++){
-                    if(name.equals(types[i][j])){
-                        sum+=board[i][j];
+                int mb=Integer.MIN_VALUE;
+                int mx=Integer.MAX_VALUE;
+                int my=Integer.MAX_VALUE;
+                Point represent=new Point(0,0);
+                
+                List<Point> groups=bfs(new Point(i, j), visited);
+                for(Point p : groups) {
+                    if(bestRepresent(mb, mx, my, p)) {
+                        mb=board[p.x][p.y];
+                        mx=p.x;
+                        my=p.y;
+                        represent=p;
                     }
                 }
+                
+                represents.add(represent);
+                board[represent.x][represent.y]+=groups.size();
+                
+                for(Point p : groups) {
+                    board[p.x][p.y]-=1;
+                }
             }
-            System.out.print(sum+" ");
         }
-        System.out.println();
     }
-
-    public static Point bfs(Point s, boolean[][] visited){
+    
+    static List<Point> bfs(Point s, boolean[][] visited) {
         Queue<Point> q=new ArrayDeque<>();
-        List<Point> list=new ArrayList<>();
-        int cnt=1;
-        q.offer(s);
         visited[s.x][s.y]=true;
-        s.num=board[s.x][s.y]--;
-        list.add(s);
-
-        while(!q.isEmpty()){
+        List<Point> groups=new ArrayList<>();
+        q.offer(s);
+        groups.add(s);
+        
+        while(!q.isEmpty()) {
             Point p=q.poll();
-            for(int i=0; i<4; i++){
+            
+            for(int i=0; i<4; i++) {
                 int nx=p.x+dx[i];
                 int ny=p.y+dy[i];
-
-                if(nx>=0 && nx<n && ny>=0 && ny<n && !visited[nx][ny] && types[nx][ny].equals(p.type)){
-                    int num=board[nx][ny]--;
-                    Point tmp=new Point(nx, ny);
-
-                    tmp.type=p.type;
-                    tmp.num=num;
+                
+                if(nx>=0 && nx<n && ny>=0 && ny<n && !visited[nx][ny] && 
+                        foods[p.x][p.y].equals(foods[nx][ny])) {
                     visited[nx][ny]=true;
-                    q.offer(tmp);
-                    cnt++;
-                    list.add(tmp);
+                    Point t=new Point(nx, ny);
+                    groups.add(t);
+                    q.offer(t);
                 }
             }
         }
-
-        Collections.sort(list);
-        Point p=list.get(0);
-        board[p.x][p.y]+=cnt;
-        p.num=board[p.x][p.y];
-        return p;
+        
+        return groups;
     }
-
-    public static String match(String type){
-        String str="";
-        if(type.contains("T")) str+="T";
-        if(type.contains("C")) str+="C";
-        if(type.contains("M")) str+="M";
-        return str;
+    
+    static boolean bestRepresent(int mb, int mx, int my, Point p) {
+        if(mb!=board[p.x][p.y]) return mb<board[p.x][p.y];
+        if(mx!=p.x) return mx>p.x;
+        return my>p.y;
     }
 }
+
