@@ -1,4 +1,3 @@
-
 import java.util.*;
 
 class Point{
@@ -79,41 +78,35 @@ public class Main {
                     if(isAvaiable(i, j, l)) {
                         getPerson(i, j, l);
                         int[][] cut=new int[l][l];
+                        int sx=i;
+                        int sy=j;
                         
-                        int x=i;
-                        int y=j;
                         for(int r=0; r<l; r++) {
                             for(int c=0; c<l; c++) {
-                                cut[r][c]=board[x][y++];
+                                cut[r][c]=board[sx+r][sy+c];
                             }
-                            x++;
-                            y=j;
                         }
                         cut=spin(cut);
                         
-                        x=0;
-                        y=0;
+                        int x=0;
+                        int y=0;
                         for(Point p : spinPerson) {
-                            x=p.x-i;
-                            y=p.y-j;
-                            p.x=y+i;
-                            p.y=l-x-1+j;
+                            x=p.x-sx;
+                            y=p.y-sy;
+                            p.x=y+sx;
+                            p.y=l-x-1+sy;
 
                         }
                         
-                        x=exit.x-i;
-                        y=exit.y-j;
-                        exit.x=y+i;
-                        exit.y=l-x-1+j;
+                        x=exit.x-sx;
+                        y=exit.y-sy;
+                        exit.x=y+sx;
+                        exit.y=l-x-1+sy;
                         
-                        x=i;
-                        y=j;
                         for(int r=0; r<l; r++) {
                             for(int c=0; c<l; c++) {
-                                board[x][y++]=cut[r][c];
+                                board[sx+r][sy+c]=cut[r][c];
                             }
-                            x++;
-                            y=j;
                         }
                         
                         return;
