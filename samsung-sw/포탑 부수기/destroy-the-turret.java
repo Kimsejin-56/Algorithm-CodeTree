@@ -134,42 +134,51 @@ public class Main {
                 }
                 
                 if(dist[p.x][p.y]>dist[nx][ny] && board[nx][ny]>0) {
-                    Point np=new Point(nx, ny);
-                    q.offer(np);
+                    q.offer(new Point(nx, ny));
                 }
             }
         }
         
         if(success) {
-            q.offer(s);
-            check[s.x][s.y]=true;
-            
-            int x=s.x;
-            int y=s.y;
-            
-            while(x!=e.x || y!=e.y) {
-                for(int i=0; i<4; i++) {
-                    int nx=x+dx[i];
-                    int ny=y+dy[i];
-                    
-                    if(nx<0) nx=n-1;
-                    if(nx>=n) nx=0;
-                    if(ny<0) ny=m-1;
-                    if(ny>=m) ny=0;
-                    
-                    if(dist[x][y]>dist[nx][ny] && board[nx][ny]>0) {
-                        check[nx][ny]=true;
-                        if(nx==e.x && ny==e.y) board[e.x][e.y]-=board[s.x][s.y];
-                        else board[nx][ny]-=board[s.x][s.y]/2;
-                        x=nx;
-                        y=ny;
-                        break;
-                    }
-                }
+            List<Point> path=getPath(s, e, dist);
+            for(Point p : path) {
+                if(p.x==e.x && p.y==e.y) board[e.x][e.y]-=board[s.x][s.y];
+                else board[p.x][p.y]-=board[s.x][s.y]/2;
             }
         }
         
         return success;
+    }
+    
+    static List<Point> getPath(Point s, Point e, int[][] dist) {
+        List<Point> path=new ArrayList<>();
+        check[s.x][s.y]=true;
+        int x=s.x;
+        int y=s.y;
+        
+        while(x!=e.x || y!=e.y) {
+            boolean move=false;
+            for(int i=0; i<4; i++) {
+                int nx=x+dx[i];
+                int ny=y+dy[i];
+                
+                if(nx<0) nx=n-1;
+                if(nx>=n) nx=0;
+                if(ny<0) ny=m-1;
+                if(ny>=m) ny=0;
+                
+                if(dist[x][y]>dist[nx][ny] && board[nx][ny]>0) {
+                    check[nx][ny]=true;
+                    path.add(new Point(nx, ny));
+                    x=nx;
+                    y=ny;
+                    move=true;
+                    break;
+                }
+            }
+            if(!move) return null;
+        }
+        return path;
     }
     
     static int[][] bfs(Point s){
@@ -262,4 +271,5 @@ public class Main {
         return my<p.y;
     }
 }
+
 
