@@ -11,122 +11,140 @@ class Point{
 public class Main {
     static int n, total;
     static int[][] board;
-    static int[] dx= {-1, 0, 1, 0};
-    static int[] dy= {0, -1, 0, 1};
-    static Map<Integer, List<Point>> map;
+    static int[] dx={-1, 0, 1, 0};
+    static int[] dy={0, -1, 0, 1};
+    static List<List<Point>> groups=new ArrayList<>();
     
     public static void main(String[] args) {
-       Scanner sc=new Scanner(System.in);
-       n=sc.nextInt();
-       board=new int[n][n];
-       map=new HashMap<>();
-       total=0;
-       int t=0;
-       
-       for(int i=0; i<n; i++) {
-           for(int j=0; j<n; j++) {
-               board[i][j]=sc.nextInt();
-           }
-       }
-       
-       while(t<4) {
-           int cnt=1;
-           int m=n/2;
-           int len=(n-1)/2;
-           int[] arr=new int[2];
-           boolean[][] visited=new boolean[n][n];
-           
-           for(int i=0; i<n; i++) {
-               for(int j=0; j<n; j++) {
-                   if(visited[i][j]) continue;
-                   map.put(cnt, bfs(new Point(i, j), visited));
-                   cnt++;
-               }
-           }
-           
-           
-           dfs(1, 0, arr);
-           rotate(m, len);
-           map.clear();
-           t++;
-       }
-       System.out.println(total);
+        Scanner sc=new Scanner(System.in);
+        n=sc.nextInt();
+        board=new int[n][n];
+        
+        total=0;
+        
+        for(int i=0; i<n; i++) {
+            for(int j=0; j<n; j++) {
+                board[i][j]=sc.nextInt();
+            }
+        }
+        
+        for(int l=0; l<4; l++) {
+            grouping();
+            spin();
+            groups.clear();
+        }
+        System.out.println(total);
     }
     
-    public static void rotate(int m, int len){
-        int[][] tmp=new int[n][n];
-
-        for(int i=0; i<n; i++){
-            for(int j=0; j<n; j++){
-                if(i==m || j==m){
-                    tmp[n-j-1][i]=board[i][j];
+    static void grouping() {
+        boolean[][] visited=new boolean[n][n];
+        for(int i=0; i<n; i++) {
+            for(int j=0; j<n; j++) {
+                if(visited[i][j]) continue;
+                groups.add(bfs(new Point(i, j), visited));
+            }
+        }
+        
+        dfs(0, 0, new int[2]);
+    }
+    
+    static void spin() {
+        int mx=n/2;
+        int my=n/2;
+        int[][] next=new int[n][n];
+        
+        for(int i=0; i<n; i++) {
+            for(int j=0; j<n; j++) {
+                if(i==mx || j==my) {
+                    next[n-j-1][i]=board[i][j];
                 }
             }
         }
-
-        spin(0, 0, len, tmp);
-        spin(0, m+1, len, tmp);
-        spin(m+1, 0, len, tmp);
-        spin(m+1, m+1, len, tmp);
-
-        board=tmp;
+        
+        for(int i=0; i<n; i++) {
+            for(int j=0; j<n; j++) {
+                if(i==mx || j==my) {
+                    board[i][j]=next[i][j];
+                }
+            }
+        }
+        
+        square(mx, 0, 0);
+        square(mx, 0, mx+1);
+        square(mx, mx+1, 0);
+        square(mx, mx+1, mx+1);
     }
     
-    public static void spin(int sx, int sy, int len, int[][] arr) {
+    static void square(int len, int x, int y) {
+        int[][] arr=new int[len][len];
+        
         for(int i=0; i<len; i++) {
             for(int j=0; j<len; j++) {
-                int nx=j;
-                int ny=len-i-1;
-                arr[nx+sx][ny+sy]=board[sx+i][sy+j];
+                arr[i][j]=board[x+i][y+j];
             }
         }
         
+        int[][] tmp=new int[len][len];
+        for(int i=0; i<len; i++) {
+            for(int j=0; j<len; j++) {
+                tmp[j][len-i-1]=arr[i][j];
+            }
+        }
+        arr=tmp;
+        
+        for(int i=0; i<len; i++) {
+            for(int j=0; j<len; j++) {
+                board[x+i][y+j]=arr[i][j];
+            }
+        }
     }
     
-    public static int calc(List<Point> g1, List<Point> g2) {
+    static void dfs(int depth, int start, int[] arr) {
+        if(depth==2) {
+            int g1=arr[0];
+            int g2=arr[1];
+            List<Point> p1=groups.get(g1);
+            List<Point> p2=groups.get(g2);
+            total+=getScore(p1, p2);
+        }else {
+            for(int i=start; i<groups.size(); i++) {
+                arr[depth]=i;
+                dfs(depth+1, i+1, arr);
+            }
+        }
+    }
+    
+    static int getScore(List<Point> g1, List<Point> g2) {
+        Point p1=g1.get(0);
+        Point p2=g2.get(0);
+        int n1=board[p1.x][p1.y];
+        int n2=board[p2.x][p2.y];
         int s1=g1.size();
         int s2=g2.size();
-        int v1=board[g1.get(0).x][g1.get(0).y];
-        int v2=board[g2.get(0).x][g2.get(0).y];
         int cnt=0;
         
-        for(Point p1 : g1) {
+        for(Point np1 : g1) {
             for(int i=0; i<4; i++) {
-                int nx=p1.x+dx[i];
-                int ny=p1.y+dy[i];
+                int nx=np1.x+dx[i];
+                int ny=np1.y+dy[i];
                 
-                if(nx>=0 && nx<n && ny>=0 && ny<n && board[p1.x][p1.y]!=board[nx][ny]) {
-                    for(Point p2 : g2) {
-                        if(p2.x==nx &&  p2.y==ny) {
-                            cnt++;
-                            break;
-                        }
-                    }
+                for(Point np2 : g2) {
+                    if(nx==np2.x && ny==np2.y) cnt++;
                 }
             }
         }
         
-        return (s1+s2)*v1*v2*cnt;
+        return (s1+s2)*n1*n2*cnt;
     }
     
     
-    public static void dfs(int start, int depth, int[] arr) {
-        if(depth==2) {
-            total+=calc(map.get(arr[0]), map.get(arr[1]));
-        }else {
-            for(int i=start; i<=map.size(); i++) {
-                arr[depth]=i;
-                dfs(i+1, depth+1, arr);
-            }
-        }
-    }
-    
-    public static List<Point> bfs(Point s, boolean[][] visited) {
+    static List<Point> bfs(Point s, boolean[][] visited){
         Queue<Point> q=new ArrayDeque<>();
+        List<Point> list=new ArrayList<>();
         visited[s.x][s.y]=true;
         q.offer(s);
-        List<Point> list=new ArrayList<>();
         list.add(s);
+        int num=board[s.x][s.y];
         
         while(!q.isEmpty()) {
             Point p=q.poll();
@@ -135,7 +153,8 @@ public class Main {
                 int nx=p.x+dx[i];
                 int ny=p.y+dy[i];
                 
-                if(nx>=0 && nx<n && ny>=0 && ny<n && !visited[nx][ny] && board[p.x][p.y]==board[nx][ny]) {
+                if(nx>=0 && nx<n && ny>=0 && ny<n && 
+                        board[nx][ny]==num && !visited[nx][ny]) {
                     visited[nx][ny]=true;
                     Point t=new Point(nx, ny);
                     q.offer(t);
@@ -147,3 +166,4 @@ public class Main {
         return list;
     }
 }
+
