@@ -1,193 +1,185 @@
 import java.util.*;
 
-class Point implements Comparable<Point>{
-    int x, y;
+class Point{
+    int x, y, num;
     public Point(int x, int y) {
         this.x=x;
         this.y=y;
     }
-
-    public int compareTo(Point p) {
-        if(this.y==p.y) return this.x-p.x;
-        return this.y-p.y;
-    }
 }
 
-class Info implements Comparable<Info>{
-    int num, size;
-    public Info(int num, int size) {
-        this.num=num;
-        this.size=size;
-    }
+class Info{
+    int num, x1, y1, x2, y2; 
     
-    public int compareTo(Info o) {
-        if(this.size==o.size)return this.num-o.num;
-        return o.size-this.size;
+    public Info(int num, int y1, int x1, int y2, int x2) {
+        this.num=num;
+        this.x1=x1;
+        this.y1=y1;
+        this.x2=x2;
+        this.y2=y2;
     }
 }
+
 public class Main {
-    static int n, q, idx, total;
+    static int n, q, total;
     static int[][] board;
-    static Map<Integer, List<Point>> map;
+    static List<Info> result=new ArrayList<>();
+    static List<List<Point>> creatures=new ArrayList<>();
     static int[] dx= {-1, 0, 1, 0};
     static int[] dy= {0, -1, 0, 1};
-    
+    static int[] size;
     public static void main(String[] args) {
         Scanner sc=new Scanner(System.in);
         n=sc.nextInt();
         q=sc.nextInt();
         board=new int[n][n];
-        map=new HashMap<>();
-        int turn=0;
-        idx=1;
+        size=new int[q];
         
-        Point p1, p2;
-        while(turn<q) {
-            p1=new Point(sc.nextInt()-1, sc.nextInt()-1);
-            p2=new Point(sc.nextInt()-1, sc.nextInt()-1);
-            List<Integer> removeList = new ArrayList<>();
+        for(int i=0; i<q; i++) {
+            result.add(new Info(i+1, sc.nextInt(), sc.nextInt(), sc.nextInt(), sc.nextInt()));
+        }
+        
+        for(int i=0; i<q; i++) {
             total=0;
-            
-            putCreature(p1, p2);
-            for(int i : map.keySet()) {
-                if(map.get(i).isEmpty()) {
-                    removeList.add(i);
-                    continue;
-                }
-                Point p=map.get(i).get(0);
-                if(!bfs(p, i)) removeList.add(i);
-            }
-            
-            for(int i : removeList) {
-                map.remove(i);
-            }
-            
+            Info info=result.get(i);
+            batch(info);
+            removeCreature();
             moveCreature();
-            
-            List<Integer> list=new ArrayList<>();
-            for(int i : map.keySet()) list.add(i);
-            if(list.size()>=2) dfs(0, 0, list, new int[2]);
+            getScore(0, 0, new int[2]);
             System.out.println(total);
-            idx++;
-            turn++;
-        }
-        
-        
-    }
-    
-    public static void dfs(int start, int depth, List<Integer> list, int[] arr) {
-        if(depth==2) {
-            List<Point> l1=map.get(arr[0]);
-            List<Point> l2=map.get(arr[1]);
-            if(available(l1, arr[1])) {
-                total+=l1.size()*l2.size();
-            }
-        }else {
-            for(int i=start; i<list.size(); i++) {
-                arr[depth]=list.get(i);
-                dfs(i+1, depth+1, list, arr);
-            }
+            creatures.clear();
         }
     }
     
-    public static boolean available(List<Point> l1, int num) {
-        for(int i=0; i<l1.size(); i++) {
-            Point p=l1.get(i);
-            
-            for(int d=0; d<4; d++) {
-                int nx=p.x+dx[d];
-                int ny=p.y+dy[d];
+    static boolean isOverlap(List<Point> g1, List<Point> g2) {
+        for(Point p1 : g1) {
+            for(int i=0; i<4; i++) {
+                int nx=p1.x+dx[i];
+                int ny=p1.y+dy[i];
                 
-                if(nx>=0 && nx<n && ny>=0 && ny<n &&  board[nx][ny]==num) {
-                    return true;
+                for(Point p2 : g2) {
+                    if(nx==p2.x && ny==p2.y) return true;
+                    
                 }
             }
         }
-        
         return false;
     }
     
-    public static void moveCreature() {
-        List<Info> order=new ArrayList<>();
-        int[][] nextBoard=new int[n][n];
-        Map<Integer, List<Point>> nextMap=new HashMap<>();
-
-        for(int key : map.keySet()){
-            order.add(new Info(key, map.get(key).size()));
-        }
-
-        Collections.sort(order);
-
-        for(Info i : order){
-            List<Point> creatures=map.get(i.num);
-            Collections.sort(creatures);
-            Point min=creatures.get(0);
-            List<Point> move=new ArrayList<>();
-
-            List<Point> relative=new ArrayList<>();
-
-            for(Point p : creatures){
-                relative.add(new Point(p.x-min.x, p.y-min.y));
+    static void getScore(int depth, int start, int[] arr) {
+        if(depth==2) {
+            List<Point> g1=creatures.get(arr[0]);
+            List<Point> g2=creatures.get(arr[1]);
+            if(isOverlap(g1, g2)) {
+                total+=g1.size()*g2.size();
             }
-            boolean placed=false;
-            for(int y=0; y<n; y++){
-                for(int x=0; x<n; x++){
-                    if(canMove(x, y, relative, nextBoard)){
-                        for(Point p : relative){
-                            int nx=p.x+x;
-                            int ny=p.y+y;
-
-                            nextBoard[nx][ny]=i.num;
-                            move.add(new Point(nx, ny));
-                        }
-
-                        placed=true;
+            
+        }else {
+            for(int i=start; i<creatures.size(); i++) {
+                arr[depth]=i;
+                getScore(depth+1, i+1, arr);
+            }
+        }
+    }
+    
+    static void moveCreature() {
+        int[][] move=new int[n][n];
+        
+        creatures.sort((a, b) -> {
+            if(a.size()==b.size()) return a.get(0).num -b.get(0).num;
+            return b.size()-a.size();
+        });
+        
+        for(int i=0; i<creatures.size(); i++) {
+            List<Point> list=creatures.get(i);
+            boolean stop=false;
+            for(int c=0; c<n; c++) {
+                for(int r=0; r<n; r++) {
+                    if(isPut(r, c, list, move)) {
+                        put(r, c, list, move);
+                        stop=true;
                         break;
                     }
                 }
-                if(placed) {
-                    nextMap.put(i.num, move);
-                    break;
-                }
+                if(stop) break;
             }
+
+            if(!stop){
+                creatures.remove(list);
+                i--;
+            }
+            board=move;
         }
-
-        board=nextBoard;
-        map=nextMap;
     }
-
-    public static boolean canMove(int x, int y, List<Point> list, int[][] arr){
-        for(Point p : list){
-            int nx=p.x+x;
-            int ny=p.y+y;
-
-            if(nx<0 || nx>=n || ny<0 || ny>=n || arr[nx][ny]!=0) return false;
+    
+    static boolean isPut(int x, int y, List<Point> list, int[][] move) {
+        int mx=Integer.MAX_VALUE;
+        int my=Integer.MAX_VALUE;
+        for(Point c : list) {
+            mx=Math.min(c.x, mx);
+            my=Math.min(c.y, my);
+        }
+        
+        for(Point c : list) {
+            int nx=x+(c.x-mx);
+            int ny=y+(c.y-my);
+            if(nx<0 || nx>=n || ny<0 || ny>=n) return false;
+            if(move[nx][ny]!=0) return false;
         }
         return true;
     }
     
-    public static void putCreature(Point p1, Point p2) {
-        List<Point> list=new ArrayList<>();
-        for(int i=p1.y+1; i<=p2.y; i++) {
-            for(int j=p1.x+1; j<=p2.x; j++) {
-                if(board[i][j]!=0) {
-                    for(int l=0; l<map.get(board[i][j]).size(); l++ ) {
-                        Point p=map.get(board[i][j]).get(l);
-                        if(p.x==i && p.y==j) map.get(board[i][j]).remove(p);
-                    }
-                }
-                board[i][j]=idx;
-                list.add(new Point(i, j));
+    static boolean put(int x, int y, List<Point> list, int[][] move) {
+        int mx=Integer.MAX_VALUE;
+        int my=Integer.MAX_VALUE;
+        for(Point c : list) {
+            mx=Math.min(c.x, mx);
+            my=Math.min(c.y, my);
+        }
+        
+        for(Point c : list) {
+            int nx=x+(c.x-mx);
+            int ny=y+(c.y-my);
+            move[nx][ny]=c.num;
+            c.x=nx;
+            c.y=ny;
+        }
+        return true;
+    }
+    
+    static void removeCreature() {
+        boolean[][] visited=new boolean[n][n];
+        int[] nc=new int[q];
+        for(int i=0; i<n; i++) {
+            for(int j=0; j<n; j++) {
+                if(visited[i][j] || board[i][j]==0) continue;
+                nc[board[i][j]-1]++;
+                creatures.add(bfs(new Point(i, j), visited));
             }
         }
         
-        map.put(idx, list);
+        for(int i=0; i<q; i++) {
+            if(nc[i]>=2) {
+                for(int j=0; j<creatures.size(); j++) {
+                    List<Point> list=creatures.get(j);
+                    int num=list.get(0).num;
+                    if(num==i+1) {
+                        for(Point p : list) board[p.x][p.y]=0;
+                        creatures.remove(list);
+                        j--;
+                    }
+                }
+            }
+        }
     }
     
-    public static boolean bfs(Point s, int num) {
+    static List<Point> bfs(Point s, boolean[][] visited){
         Queue<Point> q=new ArrayDeque<>();
-        boolean[][] visited=new boolean[n][n];
+        List<Point> list=new ArrayList<>();
+        int num=board[s.x][s.y];
+        s.num=num;
         q.offer(s);
+        list.add(s);
         visited[s.x][s.y]=true;
         
         while(!q.isEmpty()) {
@@ -197,22 +189,25 @@ public class Main {
                 int nx=p.x+dx[i];
                 int ny=p.y+dy[i];
                 
-                if(nx>=0 && nx<n && ny>=0 && ny<n && !visited[nx][ny] && board[nx][ny]==board[p.x][p.y]) {
+                if(nx>=0 && nx<n && ny>=0 && ny<n && 
+                        !visited[nx][ny] && board[nx][ny]==num) {
                     visited[nx][ny]=true;
-                    q.offer(new Point(nx, ny));
+                    Point t=new Point(nx, ny);
+                    t.num=num;
+                    q.offer(t);
+                    list.add(t);
                 }
             }
         }
-        
-        boolean rm=false;
-        for(Point p : map.get(num)) {
-            if(!visited[p.x][p.y]) {
-                rm=true;
-                break;
+        return list;
+    }
+    
+    static void batch(Info info) {
+        for(int i=info.x1; i<info.x2; i++) {
+            for(int j=info.y1; j<info.y2; j++) {
+                board[i][j]=info.num;
             }
         }
-        
-        if(rm) return false;
-        return true;
     }
 }
+
