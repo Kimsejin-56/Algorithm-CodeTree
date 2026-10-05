@@ -27,13 +27,11 @@ public class Main {
     static List<List<Point>> creatures=new ArrayList<>();
     static int[] dx= {-1, 0, 1, 0};
     static int[] dy= {0, -1, 0, 1};
-    static int[] size;
     public static void main(String[] args) {
         Scanner sc=new Scanner(System.in);
         n=sc.nextInt();
         q=sc.nextInt();
         board=new int[n][n];
-        size=new int[q];
         
         for(int i=0; i<q; i++) {
             result.add(new Info(i+1, sc.nextInt(), sc.nextInt(), sc.nextInt(), sc.nextInt()));
@@ -46,47 +44,44 @@ public class Main {
             removeCreature();
             moveCreature();
             creatures.clear();
-            boolean[][] visited=new boolean[n][n];
-            for(int l=0; l<n; l++) {
-                for(int j=0; j<n; j++) {
-                    if(visited[l][j] || board[l][j]==0) continue;
-                    creatures.add(bfs(new Point(l, j), visited));
-                }
-            
-            }
             getScore(0, 0, new int[2]);
+            total/=2;
             System.out.println(total);
             creatures.clear();
         }
     }
     
-    static boolean isOverlap(List<Point> g1, List<Point> g2) {
-        for(Point p1 : g1) {
-            for(int i=0; i<4; i++) {
-                int nx=p1.x+dx[i];
-                int ny=p1.y+dy[i];
-                
-                for(Point p2 : g2) {
-                    if(nx==p2.x && ny==p2.y) return true;
+    static void getScore(int depth, int start, int[] arr) {
+        boolean[][] close=new boolean[q+1][q+1];
+        int[] size=new int[q+1];
+        for(int i=0; i<n; i++) {
+            for(int j=0; j<n; j++) {
+                if(board[i][j]>0) size[board[i][j]]++; 
+            }
+        }
+        
+        for(int i=0; i<n; i++) {
+            for(int j=0; j<n; j++) {
+                if(board[i][j]==0) continue;
+                for(int d=0; d<4; d++) {
+                    int nx=i+dx[d];
+                    int ny=j+dy[d];
                     
+                    if(nx<0 || nx>=n ||ny<0 || ny>=n) continue;
+                    if(board[nx][ny]==0 || board[i][j]==board[nx][ny]) continue;
+                    
+                    
+                    close[board[i][j]][board[nx][ny]]=true;
+                    close[board[nx][ny]][board[i][j]]=true;
                 }
             }
         }
-        return false;
-    }
-    
-    static void getScore(int depth, int start, int[] arr) {
-        if(depth==2) {
-            List<Point> g1=creatures.get(arr[0]);
-            List<Point> g2=creatures.get(arr[1]);
-            if(isOverlap(g1, g2)) {
-                total+=g1.size()*g2.size();
-            }
-            
-        }else {
-            for(int i=start; i<creatures.size(); i++) {
-                arr[depth]=i;
-                getScore(depth+1, i+1, arr);
+        
+        for(int i=0; i<=q; i++) {
+            for(int j=0; j<=q; j++) {
+                if(close[i][j]) {
+                    total+=size[i]*size[j];
+                }
             }
         }
     }
