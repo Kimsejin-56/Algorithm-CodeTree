@@ -45,6 +45,15 @@ public class Main {
             batch(info);
             removeCreature();
             moveCreature();
+            creatures.clear();
+            boolean[][] visited=new boolean[n][n];
+            for(int l=0; l<n; l++) {
+                for(int j=0; j<n; j++) {
+                    if(visited[l][j] || board[l][j]==0) continue;
+                    creatures.add(bfs(new Point(l, j), visited));
+                }
+            
+            }
             getScore(0, 0, new int[2]);
             System.out.println(total);
             creatures.clear();
@@ -103,11 +112,6 @@ public class Main {
                 }
                 if(stop) break;
             }
-
-            if(!stop){
-                creatures.remove(list);
-                i--;
-            }
             board=move;
         }
     }
@@ -141,8 +145,6 @@ public class Main {
             int nx=x+(c.x-mx);
             int ny=y+(c.y-my);
             move[nx][ny]=c.num;
-            c.x=nx;
-            c.y=ny;
         }
         return true;
     }
