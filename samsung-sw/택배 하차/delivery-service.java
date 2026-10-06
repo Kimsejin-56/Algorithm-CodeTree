@@ -34,7 +34,7 @@ public class Main {
             init(b);
         }
         boxs.sort((a,b)->a.k-b.k);
-        
+
         while(!boxs.isEmpty()){
             for(Point b : boxs){
                 if(moveLeft(b)) {
@@ -164,9 +164,8 @@ public class Main {
         int nx=b.x;
         while(isDown(b, nx)){
             nx++;
-            b.x=nx;
         }
-
+        b.x=nx;
         for(int i=b.x; i<b.x+b.h; i++) {
             for (int j=b.y; j<b.y+b.w; j++) {
                 board[i][j]=b.k;
