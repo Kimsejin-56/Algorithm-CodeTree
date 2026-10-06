@@ -61,7 +61,7 @@ public class Main {
             Point b=boxs.get(i);
             int nx=b.x+b.h-1;
 
-            while(isGraviyry(b, nx)){
+            while(isDown(b, nx)){
                 nx++;
             }
 
@@ -83,22 +83,11 @@ public class Main {
         }
     }
 
-    static boolean isGraviyry(Point b, int x){
-        for(int j=b.y; j<b.y+b.w; j++){
-            if(x+1<0 || x+1>=n || j<0 || j>=n) return false;
-            if(board[x+1][j]!=0) return false;
-        }
-
-        return true;
-    }
-
     static boolean isDown(Point b, int x){
-        for(int i=0; i<b.h; i++){
-            for(int j=b.y; j<b.y+b.w; j++){
-                int nx=x+i+1;
-                if(nx<0 || nx>=n || j<0 || j>=n) return false;
-                if(board[nx][j]!=0) return false;
-            }
+        for(int j=b.y; j<b.y+b.w; j++){
+            int nx=x+1;
+            if(nx<0 || nx>=n || j<0 || j>=n) return false;
+            if(board[nx][j]!=0) return false;
         }
         return true;
     }
@@ -161,11 +150,11 @@ public class Main {
     }
 
     static void init(Point b){
-        int nx=b.x;
+        int nx=b.x+b.h-1;
         while(isDown(b, nx)){
             nx++;
         }
-        b.x=nx;
+        b.x=nx-b.h+1;
         for(int i=b.x; i<b.x+b.h; i++) {
             for (int j=b.y; j<b.y+b.w; j++) {
                 board[i][j]=b.k;
