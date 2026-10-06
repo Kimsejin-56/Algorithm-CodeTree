@@ -1,187 +1,176 @@
 import java.util.*;
 
-class Point implements Comparable<Point>{
-    int k, h, w, c, r;
+class Point {
+    int x, y, k, h, w;
 
-    public Point(int k, int h, int w, int c) {
+    public Point(int k, int h, int w, int y){
         this.k=k;
         this.h=h;
         this.w=w;
-        this.c=c;
+        this.y=y;
     }
-    
-    public int compareTo(Point p) {
-        return this.k-p.k;
-    }
+
+
 }
 
 public class Main {
     static int n, m;
     static int[][] board;
-    static List<Point> box;
+    static List<Point> boxs = new ArrayList<>();
+    static List<Integer> answer=new ArrayList<>();
+
     public static void main(String[] args) {
         Scanner sc=new Scanner(System.in);
         n=sc.nextInt();
         m=sc.nextInt();
         board=new int[n][n];
-        box=new ArrayList<>();
-        List<Integer> answer=new ArrayList<>();
-        
-        for(int i=0; i<m; i++) {
-            Point b=new Point(sc.nextInt(), sc.nextInt(), sc.nextInt(), sc.nextInt()-1);
-            b.r=b.h-1;
-            box.add(b);
-        }
-        
-        putBox();
-        
-        Collections.sort(box);
-        
-        int num=m;
-        if(num%2==0) num=m/2;
-        else num=m/2+1;
-        
-        for(int l=0; l<num; l++) {
-            answer.add(leftBox());
-            down();
-            if(box.isEmpty()) break;
-            answer.add(rightBox());
-            down();
-        }
-        
-        for(int i : answer) System.out.println(i);
-    }
-    
-    public static void down() {
-        box.sort((a, b) -> b.r-a.r);
-        for(int l=0; l<box.size(); l++) {
-            Point b=box.get(l);
-            
-            for(int i=b.r; i>b.r-b.h; i--) {
-                for(int j=b.c; j<b.c+b.w; j++) {
-                    board[i][j]=0; 
-                }
-            }
-            
-            while(true) {
-                if(canMove(b)) {
-                    b.r++;
-                }else break;
-            }
+
+        for(int i=0; i<m; i++){
+            boxs.add(new Point(sc.nextInt(), sc.nextInt(), sc.nextInt(), sc.nextInt()-1));
         }
 
-        Collections.sort(box);
-    }
-    
-    public static int rightBox() {
-        int num=0;
-        for(int l=0; l<box.size(); l++) {
-            Point b=box.get(l);
-            int c=b.c;
-            int r=b.r;
-            
-            if(!rightMove(b)) {
-                b.c=c;
-                b.r=r;
-                continue;
-            }
-            
-            //복구
-            for(int i=r; i>r-b.h; i--) {
-                for(int j=c; j<c+b.w; j++) {
-                    board[i][j]=0; 
+        //메인 로직
+        for(Point b : boxs){
+            init(b);
+        }
+        boxs.sort((a,b)->a.k-b.k);
+        
+        while(!boxs.isEmpty()){
+            for(Point b : boxs){
+                if(moveLeft(b)) {
+                    boxs.remove(b);
+                    break;
                 }
             }
-            
-            num=b.k;
-            box.remove(b);
-            break;
-        }
-        return num;
-    }
-    
-    public static boolean rightMove(Point b) {
-        while(b.c!=n-b.w) {
-            for(int i=b.r; i>b.r-b.h; i--) {
-                if(board[i][b.c+b.w]!=0) return false;
-            }
-            
-            b.c++;
-        }
-        
-        if(b.c==n-b.w) return true;
-        return false;
-    }
-    
-    public static int leftBox() {
-        int num=0;
-        for(int l=0; l<box.size(); l++) {
-            Point b=box.get(l);
-            int c=b.c;
-            int r=b.r;
-            
-            if(!leftMove(b)) {
-                b.c=c;
-                b.r=r;
-                continue;
-            }
-            
-            //복구
-            for(int i=r; i>r-b.h; i--) {
-                for(int j=c; j<c+b.w; j++) {
-                    board[i][j]=0; 
+            moveDown();
+
+            for(Point b : boxs){
+                if(moveRight(b)) {
+                    boxs.remove(b);
+                    break;
                 }
             }
-            
-            num=b.k;
-            box.remove(b);
-            break;
+            moveDown();
         }
-        return num;
+
+        for(int i : answer) System.out.println(i);
     }
-    
-    public static boolean leftMove(Point b) {
-        while(b.c!=0) {
-            for(int i=b.r; i>b.r-b.h; i--) {
-                if(board[i][b.c-1]!=0) return false;
+
+    static void moveDown(){
+        for(int i=0; i<boxs.size(); i++){
+            Point b=boxs.get(i);
+            int nx=b.x+b.h-1;
+
+            while(isGraviyry(b, nx)){
+                nx++;
             }
-            
-            b.c--;
+
+            if(b.x+b.h-1!=nx){
+                for(int r=b.x; r<b.x+b.h; r++) {
+                    for (int c=b.y; c<b.y+b.w; c++) {
+                        board[r][c]=0;
+                    }
+                }
+                b.x=nx-b.h+1;
+                for(int r=b.x; r<b.x+b.h; r++) {
+                    for (int c=b.y; c<b.y+b.w; c++) {
+                        board[r][c]=b.k;
+                    }
+                }
+
+                i=-1;
+            }
         }
-        
-        if(b.c==0) return true;
+    }
+
+    static boolean isGraviyry(Point b, int x){
+        for(int j=b.y; j<b.y+b.w; j++){
+            if(x+1<0 || x+1>=n || j<0 || j>=n) return false;
+            if(board[x+1][j]!=0) return false;
+        }
+
+        return true;
+    }
+
+    static boolean isDown(Point b, int x){
+        for(int i=0; i<b.h; i++){
+            for(int j=b.y; j<b.y+b.w; j++){
+                int nx=x+i+1;
+                if(nx<0 || nx>=n || j<0 || j>=n) return false;
+                if(board[nx][j]!=0) return false;
+            }
+        }
+        return true;
+    }
+
+    static boolean moveRight(Point b){
+        int ny=b.y+b.w-1;
+        while(isRight(b, ny)){
+            ny++;
+        }
+
+        if(ny==n-1){
+            answer.add(b.k);
+            for(int i=b.x; i<b.x+b.h; i++) {
+                for (int j=b.y; j<b.y+b.w; j++) {
+                    board[i][j]=0;
+                }
+            }
+            return true;
+        }
+
         return false;
     }
-    
-    public static void putBox() {
-        for(int i=0; i<m; i++) {
-            Point b=box.get(i);
-            
-            while(true) {
-                if(canMove(b)) {
-                    b.r++;
-                }else break;
-            }
+
+    static boolean isRight(Point b, int y){
+        for(int i=b.x; i<b.x+b.h; i++){
+            int ny=y+1;
+            if(i<0 || i>=n || ny<0 || ny>=n) return false;
+            if(board[i][ny]!=0) return false;
         }
+        return true;
     }
-    
-    public static boolean canMove(Point b) {
-        int cnt=0;
-        
-        if(b.r<n-1) {
-            for(int j=b.c; j<b.c+b.w; j++) {
-                if(board[b.r+1][j]==0) cnt++; 
-            }
+
+    static boolean moveLeft(Point b){
+        int ny=b.y;
+        while(isLeft(b, ny)){
+            ny--;
         }
-        
-        if(cnt==b.w) return true;
-        
-        for(int i=b.r; i>b.r-b.h; i--) {
-            for(int j=b.c; j<b.c+b.w; j++) {
-                board[i][j]=b.k; 
+
+        if(ny==0){
+            answer.add(b.k);
+            for(int i=b.x; i<b.x+b.h; i++) {
+                for (int j=b.y; j<b.y+b.w; j++) {
+                    board[i][j]=0;
+                }
             }
+            return true;
         }
-        
+
         return false;
+    }
+
+    static boolean isLeft(Point b, int y){
+        for(int i=b.x; i<b.x+b.h; i++){
+            int ny=y-1;
+            if(i<0 || i>=n || ny<0 || ny>=n) return false;
+            if(board[i][ny]!=0) return false;
+
+        }
+        return true;
+    }
+
+    static void init(Point b){
+        int nx=b.x;
+        while(isDown(b, nx)){
+            nx++;
+            b.x=nx;
+        }
+
+        for(int i=b.x; i<b.x+b.h; i++) {
+            for (int j=b.y; j<b.y+b.w; j++) {
+                board[i][j]=b.k;
+            }
+        }
     }
 }
