@@ -107,8 +107,7 @@ public class Main {
             
             //상호작용
             if(hasSanta(select)) {
-                select.dir=dog.dir;
-                chainReaction(select);
+                chainReaction(select, dog.dir);
             }
         }
     }
@@ -160,13 +159,13 @@ public class Main {
                 
                 //상호작용
                 if(hasSanta(p)) {
-                    chainReaction(p);
+                    chainReaction(p, p.dir);
                 }
             }
         }
     }
     
-    static void chainReaction(Point p) {
+    static void chainReaction(Point p, int dir) {
         Point np=new Point(0,0);
         for(Point s : santas) {
             if(s.dead) continue;
@@ -174,8 +173,8 @@ public class Main {
             if(s.x==p.x && s.y==p.y) np=s;
         }
         
-        np.x+=dx[p.dir];
-        np.y+=dy[p.dir];
+        np.x+=dx[dir];
+        np.y+=dy[dir];
         
         if(np.x<0 || np.x>=n || np.y<0 || np.y>=n) {
             np.dead=true;
@@ -183,8 +182,7 @@ public class Main {
         }
         
         if(hasSanta(np)) {
-            np.dir=p.dir;
-            chainReaction(np);
+            chainReaction(np, dir);
         }
     }
     
