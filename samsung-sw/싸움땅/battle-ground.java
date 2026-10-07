@@ -1,19 +1,19 @@
 import java.util.*;
 
 class Point{
-    int num, x, y, s, dir, a, score;
-    
-    public Point(int num, int x, int y, int dir, int s) {
-        this.x=x;
-        this.y=y;
-        this.num=num;
-        this.dir=dir;
-        this.s=s;
-    }
+    int num, x, y, d, s, a, score;
     
     public Point(int x, int y) {
         this.x=x;
         this.y=y;
+    }
+    
+    public Point(int num, int x, int y, int d, int s) {
+        this.num=num;
+        this.x=x;
+        this.y=y;
+        this.d=d;
+        this.s=s;
     }
 }
 
@@ -21,7 +21,6 @@ public class Main {
     static int n, m, k;
     static int[] dx= {-1, 0, 1, 0};
     static int[] dy= {0, 1, 0, -1};
-    static int[][] board;
     static List<Point> peoples=new ArrayList<>();
     static List<Point> guns=new ArrayList<>();
     
@@ -30,23 +29,21 @@ public class Main {
         n=sc.nextInt();
         m=sc.nextInt();
         k=sc.nextInt();
-        board=new int[n][n];
         int turn=1;
         
-        int attack=0;
         for(int i=0; i<n; i++) {
             for(int j=0; j<n; j++) {
-                attack=sc.nextInt();
-                if(attack>0) {
-                    Point gun=new Point(i, j);
-                    gun.a=attack;
-                    guns.add(gun);
+                int num=sc.nextInt();
+                if(num>0) {
+                    Point g=new Point(i, j);
+                    g.a=num;
+                    guns.add(g);
                 }
             }
         }
         
         for(int i=0; i<m; i++) {
-            peoples.add(new Point(i+1, sc.nextInt()-1, sc.nextInt()-1, sc.nextInt(), sc.nextInt()));
+            peoples.add(new Point(i, sc.nextInt()-1, sc.nextInt()-1, sc.nextInt(), sc.nextInt()));
         }
         
         while(turn<=k) {
@@ -61,57 +58,83 @@ public class Main {
     
     static void move() {
         for(Point p : peoples) {
-            int nx=p.x+dx[p.dir];
-            int ny=p.y+dy[p.dir];
+            int nx=p.x+dx[p.d];
+            int ny=p.y+dy[p.d];
             
             if(nx<0 || nx>=n || ny<0 || ny>=n) {
-                if(p.dir==0) p.dir=2;
-                else if(p.dir==2) p.dir=0;
-                else if(p.dir==1) p.dir=3;
-                else if(p.dir==3) p.dir=1;
-                nx=p.x+dx[p.dir];
-                ny=p.y+dy[p.dir];
+                if(p.d==0) p.d=2;
+                else if(p.d==2) p.d=0;
+                else if(p.d==1) p.d=3;
+                else if(p.d==3) p.d=1;
+                
+                nx=p.x+dx[p.d];
+                ny=p.y+dy[p.d];
             }
             
             p.x=nx;
             p.y=ny;
             
-            if(hasPeople(p)) {
-                fight(p);
+            Point p2=getPeople(p);
+            if(p2!=null) {
+                figth(p, p2);
+            }
+            
+            getGun(p);
+        }
+    }
+    
+    static void getGun(Point p) {
+        List<Point> gun=getGuns(p);
+        if(!gun.isEmpty()) {
+            int max=0;
+            Point ng=new Point(0,0);
+            if(p.a==0) {
+                for(Point g : gun) {
+                    if(max<g.a) {
+                        max=g.a;
+                        ng=g;
+                    }
+                }
+                p.a=ng.a;
+                guns.remove(ng);
             }else {
-                getGun(p);
+                max=p.a;
+                for(Point g : gun) {
+                    if(max<g.a) {
+                        max=g.a;
+                        ng=g;
+                    }
+                }
+                if(max>p.a) {
+                    int tmp=p.a;
+                    p.a=ng.a;
+                    ng.a=tmp;
+                }
             }
         }
     }
     
-    static void fight(Point p) {
+    static void figth(Point p, Point o) {
         int pa=p.a+p.s;
-        Point lose=new Point(0,0);
-        Point win=new Point(0,0);
-        for(Point np : peoples) {
-            if(p==np) continue;
-            if(p.x==np.x && p.y==np.y) {
-                int npa=np.a+np.s;
-                
-                if(npa<pa) {
-                    win=p;
-                    lose=np;
-                }else if(npa==pa) {
-                    if(p.s>np.s) {
-                        win=p;
-                        lose=np;
-                    }else if(p.s<np.s) {
-                        win=np;
-                        lose=p;
-                    }
-                }else {
-                    win=np;
-                    lose=p;
-                }
-
-                win.score+=Math.abs(npa-pa);
-                break;
+        int oa=o.a+o.s;
+        
+        Point win;
+        Point lose;
+        
+        if(pa>oa) {
+            win=p;
+            lose=o;
+        }else if(pa==oa) {
+            if(p.s>o.s) {
+                win=p;
+                lose=o;
+            }else {
+                win=o;
+                lose=p;
             }
+        }else {
+            win=o;
+            lose=p;
         }
         
         if(lose.a>0) {
@@ -121,69 +144,40 @@ public class Main {
             lose.a=0;
         }
         
-        int dir=lose.dir;
-        int nx=lose.x+dx[dir];
-        int ny=lose.y+dy[dir];
-        
-        while(true) {
-            if(nx<0 || nx>=n || ny<0 || ny>=n || hasPeople(new Point(nx, ny))) {
-                dir=changeDir(dir);
-                nx=lose.x+dx[dir];
-                ny=lose.y+dy[dir];
-            }else {
-                lose.dir=dir;
-                break;
+        for(int i=0; i<4; i++) {
+            int nx=lose.x+dx[lose.d];
+            int ny=lose.y+dy[lose.d];
+            Point tmp=getPeople(new Point(nx, ny));
+            if(tmp!=null || nx<0 || nx>=n || ny<0 || ny>=n) {
+                lose.d++;
+                if(lose.d>3) lose.d=0;
+                continue;
             }
+            lose.x=nx;
+            lose.y=ny;
+            getGun(lose);
+            break;
         }
         
-        lose.x=nx;
-        lose.y=ny;
-        getGun(lose);
+        win.score+=Math.abs(pa-oa);
         getGun(win);
     }
     
-    static void getGun(Point p) {
-        List<Point> curGun=hasGun(p);
-        if(!curGun.isEmpty()) {
-            for(int i=0; i<curGun.size(); i++) {
-                Point g=curGun.get(i);
-                if(p.a<g.a) {
-                    if(p.a==0) {
-                        p.a=g.a;
-                        guns.remove(g);
-                    }else {
-                        int tmp=g.a;
-                        g.a=p.a;
-                        p.a=tmp;
-                    }
-                }
-            }
+    static Point getPeople(Point p) {
+        for(Point o : peoples) {
+            if(o==p) continue;
+            if(o.x==p.x && o.y==p.y) return o;
         }
+        return null;
     }
     
-    public static int changeDir(int d) {
-        int dir=d+1;
-        if(dir>3) {
-            dir=0;
+    static List<Point> getGuns(Point p){
+        List<Point> gun=new ArrayList<>();
+        for(Point g : guns) {
+            if(g.x==p.x && g.y==p.y) gun.add(g);
         }
-        return dir;
-    }
-    
-    static boolean hasPeople(Point p) {
-        for(Point np : peoples) {
-            if(p==np) continue;
-            if(p.x==np.x && p.y==np.y) return true;
-        }
-        return false;
-    }
-    
-    static List<Point> hasGun(Point p) {
-        List<Point> list=new ArrayList<>();
-        for(Point ng : guns) {
-            if(p.x==ng.x && p.y==ng.y) {
-                list.add(ng);
-            }
-        }
-        return list;
+        
+        return gun;
     }
 }
+        
