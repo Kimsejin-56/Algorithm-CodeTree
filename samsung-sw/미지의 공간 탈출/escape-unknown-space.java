@@ -269,11 +269,13 @@ public class Main {
             
             while(true) {
                 int t=p.v*cnt;
-                if(nx>=0 && nx<n && ny>=0 && ny<n && board[nx][ny]==0) {
-                    if(timeSpace[nx][ny]>t) {
-                        timeSpace[nx][ny]=t;
-                    }
-                }else break;
+                if(nx<0 || nx>=n || ny<0 || ny>=n) break;
+                if(board[nx][ny]!=0) break;
+
+                if(timeSpace[nx][ny]>t) {
+                    timeSpace[nx][ny]=t;
+                }
+
                 cnt++;
                 nx+=dx[p.d];
                 ny+=dy[p.d];
