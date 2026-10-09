@@ -65,13 +65,10 @@ public class Main {
         }
         
         for(Point p : peoples) effect[p.x][p.y]=k;
-        int[][] prev=new int[n][n];
         
         while(turn<1000) {
             update();
             move();
-            prev=board;;
-            
             if(exit()) {
                 System.out.println(turn);
                 return;
