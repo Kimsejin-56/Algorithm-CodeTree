@@ -107,8 +107,8 @@ public class Main {
                 }
                 if(stop) break;
             }
-            board=move;
         }
+        board=move;
     }
     
     static boolean isPut(int x, int y, List<Point> list, int[][] move) {
