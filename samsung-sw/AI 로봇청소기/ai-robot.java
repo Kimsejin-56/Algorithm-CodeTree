@@ -70,29 +70,29 @@ public class Main {
     }
     
     static void spreadDust() {
-        int[][] copy=new int[n][n];
+        int[][] next=new int[n][n];
+        
+        for(int i=0; i<n; i++) {
+            next[i]=board[i].clone();
+        }
+        
         for(int i=0; i<n; i++) {
             for(int j=0; j<n; j++) {
                 if(board[i][j]==0) {
-                    int sum=0;
                     for(int d=0; d<4; d++) {
                         int nx=i+dx[d];
                         int ny=j+dy[d];
                         
                         if(nx>=0 && nx<n && ny>=0 && ny<n && board[nx][ny]!=-1) {
-                            sum+=board[nx][ny];
+                            next[i][j]+=board[nx][ny];
                         }
                     }
-                    copy[i][j]=sum/10;
+                    next[i][j]/=10;
                 }
             }
         }
         
-        for(int i=0; i<n; i++) {
-            for(int j=0; j<n; j++) {
-                board[i][j]+=copy[i][j];
-            }
-        }
+        board=next;
     }
     
     static void addDust() {
