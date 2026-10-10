@@ -110,44 +110,17 @@ public class Main {
     
     
     static boolean razor(Point s, Point e) {
-        Queue<Point> q=new ArrayDeque<>();
-        boolean success=false;
         int[][] dist=bfs(e);
+        List<Point> path=getPath(s, e, dist);
         
-        q.offer(s);
-        check[s.x][s.y]=true;
-        while(!q.isEmpty()) {
-            Point p=q.poll();
-            for(int i=0; i<4; i++) {
-                int nx=p.x+dx[i];
-                int ny=p.y+dy[i];
-                
-                if(nx<0) nx=n-1;
-                if(nx>=n) nx=0;
-                if(ny<0) ny=m-1;
-                if(ny>=m) ny=0;
-                
-                if(nx==e.x && ny==e.y) {
-                    success=true;
-                    q.clear();
-                    break;
-                }
-                
-                if(dist[p.x][p.y]>dist[nx][ny] && board[nx][ny]>0) {
-                    q.offer(new Point(nx, ny));
-                }
-            }
+        if(path==null) return false;
+            
+        for(Point p : path) {
+            if(p.x==e.x && p.y==e.y) board[e.x][e.y]-=board[s.x][s.y];
+             else board[p.x][p.y]-=board[s.x][s.y]/2;
         }
         
-        if(success) {
-            List<Point> path=getPath(s, e, dist);
-            for(Point p : path) {
-                if(p.x==e.x && p.y==e.y) board[e.x][e.y]-=board[s.x][s.y];
-                else board[p.x][p.y]-=board[s.x][s.y]/2;
-            }
-        }
-        
-        return success;
+        return true;
     }
     
     static List<Point> getPath(Point s, Point e, int[][] dist) {
