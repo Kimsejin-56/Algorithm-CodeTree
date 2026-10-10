@@ -128,7 +128,7 @@ public class Main {
         return true;
     }
     
-    static boolean put(int x, int y, List<Point> list, int[][] move) {
+    static void put(int x, int y, List<Point> list, int[][] move) {
         int mx=Integer.MAX_VALUE;
         int my=Integer.MAX_VALUE;
         for(Point c : list) {
@@ -141,7 +141,6 @@ public class Main {
             int ny=y+(c.y-my);
             move[nx][ny]=c.num;
         }
-        return true;
     }
     
     static void removeCreature() {
