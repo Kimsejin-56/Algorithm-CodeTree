@@ -67,12 +67,14 @@ public class Main {
                     int nx=i+dx[d];
                     int ny=j+dy[d];
                     
-                    if(nx<0 || nx>=n ||ny<0 || ny>=n) continue;
-                    if(board[nx][ny]==0 || board[i][j]==board[nx][ny]) continue;
-                    
-                    
-                    close[board[i][j]][board[nx][ny]]=true;
-                    close[board[nx][ny]][board[i][j]]=true;
+                    if(nx<n && nx>=0 && ny<n && ny>=0) {
+                        if(board[nx][ny]==0) continue;
+                        if(board[i][j]!=board[nx][ny]){
+                            close[board[i][j]][board[nx][ny]]=true;
+                            close[board[nx][ny]][board[i][j]]=true;
+                        }
+                    }
+                        
                 }
             }
         }
