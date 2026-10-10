@@ -140,7 +140,7 @@ public class Main {
                 if(ny<0) ny=m-1;
                 if(ny>=m) ny=0;
                 
-                if(dist[x][y]>dist[nx][ny] && board[nx][ny]>0) {
+                if(dist[x][y]-1==dist[nx][ny] && board[nx][ny]>0) {
                     check[nx][ny]=true;
                     path.add(new Point(nx, ny));
                     x=nx;
