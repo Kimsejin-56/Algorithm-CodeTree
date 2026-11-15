@@ -51,11 +51,8 @@ public class Main {
             answer=Math.min(answer, max);
         }
 
-        if(answer==Integer.MAX_VALUE){
-            System.out.println(-1);
-            return;
-        }
-        System.out.println(answer);
+        if(answer==Integer.MAX_VALUE) System.out.println(-1);
+        else System.out.println(answer);
     }
 
     public static int[] bfs(int start){
