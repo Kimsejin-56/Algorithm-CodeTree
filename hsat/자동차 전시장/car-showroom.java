@@ -57,15 +57,12 @@ public class Main {
 
     public static int[] bfs(int start){
         Queue<Integer> q=new ArrayDeque<>();
-        boolean[] visited=new boolean[n+1];
         int level=1;
-        int[] arr=new int[n+1];
-        Arrays.fill(arr, -1);
+        int[] dist=new int[n+1];
         
-        
-        arr[start]=0;
+        Arrays.fill(dist, -1);
+        dist[start]=0;
         q.offer(start);
-        visited[start]=true;
         
         while(!q.isEmpty()){
             int len=q.size();
@@ -73,10 +70,9 @@ public class Main {
                 int cur=q.poll();
 
                 for(int next : node.get(cur)){
-                    if(visited[next]) continue;
+                    if(dist[next]!=-1) continue;
 
-                    arr[next]=level;
-                    visited[next]=true;
+                    dist[next]=level;
                     q.offer(next);
                 }
             }
@@ -84,6 +80,6 @@ public class Main {
             level++;
         }
 
-        return arr;
+        return dist;
     }
 }
