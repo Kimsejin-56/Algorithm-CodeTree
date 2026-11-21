@@ -1,7 +1,7 @@
 import java.util.*;
 
 class Car{
-    int t, idx, out, num;
+    int t, idx, out;
     String w;
     boolean exit;
 
@@ -40,10 +40,7 @@ public class Main {
         for (int i = 0; i < N; i++) {
             int t = sc.nextInt();
             String w = sc.next();
-            Car car=new Car(t, w);
-            
-            car.num=i+1;
-            cars.add(car);
+            cars.add(new Car(t, w));
         }
 
         for(int i=0; i<4; i++){
